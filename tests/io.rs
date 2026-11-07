@@ -32,7 +32,7 @@ fn truncated_gz_is_an_error_and_intact_gz_loads() {
     let gz = plain.with_extension("gz");
     std::fs::rename(plain.with_file_name("pv.gz"), &gz).unwrap();
 
-    let (keys, vals) = load(&[gz.clone()], GroupBy::Page).unwrap();
+    let (keys, vals) = load(std::slice::from_ref(&gz), GroupBy::Page).unwrap();
     assert_eq!(keys.len(), 50_000);
     assert_eq!(
         vals.iter().sum::<i64>(),

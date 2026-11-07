@@ -233,14 +233,6 @@ def skew_chart(res):
         ox = 70 + pi * (pw + 230)
         X, Y = line_panel(svg, ox, 100, pw, ph, xs, series, f"{title} speedup (x)", ymax, "Zipf exponent s")
         svg.line(ox, Y(1), ox + pw, Y(1), AXIS, 1.5)
-        if pi == 0:
-            # Direct labels at the peak of each series, nudged apart.
-            ends = sorted(((max(s[2]), s[0]) for s in series), reverse=True)
-            last = None
-            for v, name in ends:
-                y = Y(v) - 8 if last is None else max(Y(v) - 8, last + 14)
-                svg.text(ox + pw + 8, y, f"{name}: up to {v:.0f}x", 11.5, INK, weight=500)
-                last = y
     lx = 70
     for name in names:
         svg.rect(lx, H - 30, 12, 12, STRATEGY_COLOR[name], 2)

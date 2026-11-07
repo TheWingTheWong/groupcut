@@ -5,8 +5,9 @@ obvious way to prune a top-10 `GROUP BY` (skip any hash partition whose total
 cannot reach the top 10) skips **0 of 256** partitions. Splitting each
 partition's total into 16 hashed slot counters skips **242 of 256**. On a
 4-vCPU GitHub Actions runner the merge phase drops from 328 ms to 32 ms (10x)
-and the whole query from 681 ms to 442 ms (1.54x). The answer is identical;
-the pruning is exact, not approximate.
+and the whole query from 681 ms to 442 ms (1.54x). The answers are identical,
+because the sketch only decides what to skip and never skips a possible
+winner.
 
 ![Wikipedia benchmark: full merge vs partition totals vs slot sketches](assets/wiki.svg)
 
@@ -20,7 +21,7 @@ SELECT key, AGG(v) FROM t GROUP BY key ORDER BY AGG(v) DESC LIMIT k
 It implements the radix-partitioned two-phase hash aggregation that analytical
 databases use, plus the top-k pruning described in Pivot's post
 [*Can GROUP BY still be optimized after all these years?*](https://pivotlake.io/blog/know-your-limit-faster-top-k-aggregation/)
-(Oct 2026, on the HN front page this week), and measures it on real and
+(October 2026), and measures it on real and
 synthetic data. The post reports one end-to-end number (1.6x on ClickBench
 Q16) and no ablation of the slot refinement. This repo isolates that
 mechanism, extends it to SUM with negative values and to MAX, adds a per-slot
@@ -33,9 +34,9 @@ answer against a naive reference.
 cargo test --release                       # unit + randomized differential tests (~30 s)
 cargo run --release -- demo                # 20M synthetic rows, every strategy, checked against a reference
 
-scripts/fetch-wiki.sh                      # 6 hourly pageview dumps, ~270 MB, CC0
+scripts/fetch-wiki.sh                      # 6 hourly pageview dumps, ~300 MB, CC0
 cargo run --release -- wiki data/*.gz      # the headline query
-cargo run --release -- bench               # the sweeps behind the charts (~15 min)
+cargo run --release -- bench               # the sweeps behind the charts (4-15 min)
 python3 scripts/plot.py                    # re-render assets/*.svg from bench/*.json
 ```
 
@@ -141,7 +142,7 @@ Unless noted otherwise, numbers below come from the GitHub Actions runner
 (Linux, 4 vCPU; `bench/*-gha.*`). The same sweeps on the M2 are in
 `bench/*-m2.*`: same partition counts, noisier times.
 
-**Skew decides everything.** 20M rows over 4M keys, Zipf exponent s,
+**Key skew.** 20M rows over 4M keys, Zipf exponent s,
 `COUNT(*)`, k = 10, 4 threads (`bench/results-gha.txt`). Each cell gives
 partitions merged · merge-phase speedup · end-to-end speedup, relative to the
 full merge:
@@ -163,26 +164,28 @@ full merge:
 - At s = 0.8 the data looks like the Wikipedia data: partition totals prune
   nothing, slots prune 95-96%, and the query is 1.33x faster.
 - From s = 1.0 on, the heavy hitters are heavy enough that partition totals
-  work too. Slots add a little; the filter adds a little more.
+  work too. Slots still merge fewer partitions (11-12 vs 17 at s = 1.0). The
+  filter skips another 1-3% of partials, but its end-to-end effect is smaller
+  than the run-to-run variation, so I make no claim for it beyond that.
 - End to end, the gain on synthetic data is modest (1.1-1.35x), because
   pre-aggregation collapses repeated keys in phase 1 and leaves less for phase
   2. On the Wikipedia data every (wiki, page) appears once per hourly file, so
   phase 1 can't reduce anything, the merge is about half the query, and
   pruning it pays 1.54x.
 
-**How many slots?** At s = 0.8 the ablation (`assets/slots.svg`) shows a
-cliff, not a slope. 1 or 2 slots merge 255-256 partitions, 4 slots merge 27-47,
+**Number of slots.** At s = 0.8 the ablation (`assets/slots.svg`) has a sharp
+threshold rather than a gradual curve. 1 or 2 slots merge 255-256 partitions, 4 slots merge 27-47,
 8 merge 14, and 16-256 slots merge 11-13. Past 16 slots the bounds are
 already below τ and more counters just cost memory (P × slots × 8 bytes per
 thread). 16 is the default.
 
 ![Slot ablation](assets/slots.svg)
 
-**k matters.** At s = 1.0, k = 1 skips 98% of partials and k = 10 skips
+**k.** At s = 1.0, k = 1 skips 98% of partials and k = 10 skips
 95-97%. k = 100 still skips 57% (80% with the filter). By k = 1000, τ is so
 low that every partition has a slot above it and nothing is pruned.
 
-**More partitions prune better.** With 4096 partitions only 13 are merged and
+**Partition count.** With 4096 partitions only 13 are merged and
 the merge phase is 84-88x faster. Even plain partition totals work at
 that size, because each partition's tail is 16 times smaller than at 256. Slots
 get similar tightness without multiplying partitions, buffers and per-partition
@@ -196,10 +199,16 @@ during the phase-1 flush, plus sorting 256 bounds. With the filter, +5.6%: it
 switches itself off where no slot is below τ. At 4 threads the uniform rows of
 the skew table show 7-10%.
 
-**Run-to-run variation in the partition counts.** Workers take partitions
-concurrently, so one can start merging a partition before another has raised
-τ far enough to rule it out. The answer never changes, but the merged count
-does: 11-13 of 256 for 16 slots in these runs, and 27 vs 47 once for 4 slots.
+**Partition counts vary with threads and between runs.** τ is unknown until
+the first partition finishes, so the first T partitions taken (T = worker
+threads) are always merged, and workers can start a partition before another
+one has raised τ enough to rule it out. The answer never changes, but the
+merged count does: 11-13 of 256 for 16 slots at 4 threads, 15-16 at 8 threads,
+and 27 vs 47 once for 4 slots. The first T partitions are the ones with the
+highest bounds, so they usually hold winners anyway. Seeding τ before phase 2
+would remove this floor: within one flush every key is distinct, so the k-th
+largest partial of any flush is a valid lower bound on τ for COUNT, MAX, and
+SUM over non-negative values. It isn't implemented.
 
 ### A caveat about the M2 timings
 
@@ -257,10 +266,17 @@ they exceed that noise. That is why the runner numbers lead this README.
   must equal a `HashMap` + sort reference exactly, including tie order. The
   workloads include empty input, k = 0, k larger than the number of groups,
   all-negative values, values near ±2^40, and the keys `0` and `u64::MAX`.
-- **Bound invariant** checked directly against true group values, plus the
-  negative-sum cancellation case.
-- **Ties:** 5,000 groups with identical counts must return the 25 smallest
-  keys under every slot setting. A `<=` in any pruning test fails this.
+- **Bound invariant** checked directly against true group values.
+- **Targeted cases**, each verified to fail when the rule it guards is
+  mutated:
+  - a winning group sharing a slot with a large negative group (fails without
+    the clamp at zero);
+  - single-group partitions whose bound equals τ exactly (fails if partition
+    pruning uses `<=`);
+  - 5,000 tied groups that must return the 25 smallest keys (fails if the slot
+    filter uses `<=`).
+- **SUM overflow** must panic rather than wrap. A wrapped partial would
+  silently break the bound.
 - **Liveness:** skewed data must actually prune (>200 of 256 partitions), and
   uniform data must prune nothing and still be exact.
 - **Determinism** across 1-12 threads. The hash table, top-k heap, generator
@@ -271,13 +287,15 @@ macOS.
 
 ## Design decisions and trade-offs
 
-- **Exact, not approximate.** Approximate top-k (Space-Saving, Count-Min
+- **Exact answers.** Approximate top-k (Space-Saving, Count-Min
   heavy hitters) is cheaper but gives a different answer. Here the sketch only
   decides what to skip. The merge itself is exact, so the answer is the same
   as with no pruning.
 - **Sketch on flush, not per row.** Updating counters per input row would put
   an extra memory write in the hottest loop. Flushes see each distinct key in
-  a morsel once.
+  a morsel once. That saves a lot when keys repeat, and nothing when they
+  don't: on the Wikipedia data every row is a partial, which is where the
+  13-17% phase-1 cost comes from.
 - **Visit partitions in bound order.** τ rises as fast as possible, and once
   one partition is skipped, every later one is too (bounds only decrease, τ
   only increases).
@@ -294,8 +312,9 @@ macOS.
 - Only `ORDER BY agg DESC`. `ORDER BY COUNT(*) ASC` has no useful upper bound
   (every group is ≥ 1), and `MIN ... ASC` would need the mirror-image sketch.
   Neither is implemented.
-- One aggregate per query, `i64` values, keys hashed to `u64`. No spilling, no
-  NULLs, no `HAVING`.
+- One aggregate per query, `i64` values, keys hashed to `u64`. SUM fails on
+  `i64` overflow instead of widening to 128 bits. No spilling, no NULLs, no
+  `HAVING`.
 - The phase-1 pre-aggregation table always runs. On the Wikipedia data, keys
   never repeat within a morsel, so it reduces nothing. Detecting that and
   bypassing it would shrink phase 1 and make the merge, and therefore pruning,

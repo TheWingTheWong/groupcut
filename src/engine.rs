@@ -93,8 +93,13 @@ impl Default for Config {
 /// What happened to one partition in phase 2.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct PartitionInfo {
-    /// Sketch upper bound (0 / `i64::MIN` for `Full`, which has no sketch).
+    /// Sketch upper bound: the partition's largest slot counter (0 for
+    /// `Full`, which keeps no sketch).
     pub bound: i64,
+    /// The partition's smallest slot counter. If even that is at or above
+    /// the threshold, the slot filter cannot skip anything here and is not
+    /// run.
+    pub min_slot: i64,
     /// Partial aggregates flushed to this partition by all threads.
     pub entries: u64,
     pub merged: bool,
@@ -218,7 +223,9 @@ fn run<A: AggOp>(keys: &[u64], vals: &[i64], k: usize, cfg: &Config) -> (Vec<(u6
             }
         }
         for (p, d) in detail.iter_mut().enumerate() {
-            d.bound = sketch[p * slots..(p + 1) * slots].iter().copied().max().unwrap();
+            let row = &sketch[p * slots..(p + 1) * slots];
+            d.bound = row.iter().copied().max().unwrap();
+            d.min_slot = row.iter().copied().min().unwrap();
         }
         let mut order: Vec<usize> = (0..parts).collect();
         order.sort_by(|&a, &b| detail[b].bound.cmp(&detail[a].bound));
@@ -265,7 +272,9 @@ fn run<A: AggOp>(keys: &[u64], vals: &[i64], k: usize, cfg: &Config) -> (Vec<(u6
                         }
                         table.clear();
                         let mut filtered = 0u64;
-                        if filter {
+                        // The filter costs a hash and a lookup per partial; skip it
+                        // where no slot can be below the threshold.
+                        if filter && detail[p].min_slot < thr {
                             let row = &sketch[p * slots..(p + 1) * slots];
                             for l in locals {
                                 for &(key, partial) in &l.bufs[p] {

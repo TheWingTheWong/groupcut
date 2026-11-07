@@ -86,11 +86,13 @@ const STRATEGIES: [Strategy; 4] = [
     Strategy::Prune { slot_bits: 4, filter: true },
 ];
 
-/// Median-of-`reps` timings for one configuration, plus the stats and answer
+/// Median (and minimum) of `reps` timings for one configuration, plus the stats and answer
 /// of the last repetition.
 struct Measured {
     label: String,
     total_ms: f64,
+    total_min_ms: f64,
+    merge_min_ms: f64,
     local_ms: f64,
     sketch_ms: f64,
     merge_ms: f64,
@@ -108,12 +110,15 @@ fn median(mut v: Vec<f64>) -> f64 {
 }
 
 /// Run every config `reps` times, interleaved round-robin so slow drift
-/// (thermal, background load) hits all of them equally. One warm-up round.
+/// (thermal, background load) hits all of them equally, with the starting
+/// config rotated each round so none of them always runs first. One warm-up
+/// round.
 fn measure(keys: &[u64], vals: &[i64], agg: AggKind, k: usize, cfgs: &[Config], reps: usize) -> Vec<Measured> {
     let mut runs: Vec<Vec<(Stats, Vec<(u64, i64)>)>> = cfgs.iter().map(|_| Vec::new()).collect();
     for round in 0..=reps {
-        for (i, cfg) in cfgs.iter().enumerate() {
-            let (res, st) = top_k(keys, vals, agg, k, cfg);
+        for j in 0..cfgs.len() {
+            let i = (j + round) % cfgs.len();
+            let (res, st) = top_k(keys, vals, agg, k, &cfgs[i]);
             if round > 0 {
                 runs[i].push((st, res));
             }
@@ -127,8 +132,11 @@ fn measure(keys: &[u64], vals: &[i64], agg: AggKind, k: usize, cfgs: &[Config], 
             let local_ms = pick(|s| s.local);
             let sketch_ms = pick(|s| s.sketch);
             let merge_ms = pick(|s| s.merge);
+            let lowest = |f: fn(&Stats) -> std::time::Duration| r.iter().map(|(s, _)| ms(f(s))).fold(f64::INFINITY, f64::min);
+            let total_min_ms = lowest(|s| s.total);
+            let merge_min_ms = lowest(|s| s.merge);
             let (stats, result) = r.pop().unwrap();
-            Measured { label: cfg.strategy.label(), total_ms, local_ms, sketch_ms, merge_ms, stats, result }
+            Measured { label: cfg.strategy.label(), total_ms, total_min_ms, merge_min_ms, local_ms, sketch_ms, merge_ms, stats, result }
         })
         .collect()
 }
@@ -211,10 +219,12 @@ fn json_measured(out: &mut String, m: &Measured) {
     let s = &m.stats;
     let _ = write!(
         out,
-        "{{\"strategy\":\"{}\",\"total_ms\":{:.3},\"local_ms\":{:.3},\"sketch_ms\":{:.3},\"merge_ms\":{:.3},\
+        "{{\"strategy\":\"{}\",\"total_ms\":{:.3},\"total_min_ms\":{:.3},\"merge_min_ms\":{:.3},\"local_ms\":{:.3},\"sketch_ms\":{:.3},\"merge_ms\":{:.3},\
          \"partitions\":{},\"partitions_merged\":{},\"local_entries\":{},\"entries_merged\":{},\"entries_filtered\":{}}}",
         m.label,
         m.total_ms,
+        m.total_min_ms,
+        m.merge_min_ms,
         m.local_ms,
         m.sketch_ms,
         m.merge_ms,

@@ -1,0 +1,26 @@
+fetch hits_0.parquet
+fetch hits_1.parquet
+fetch hits_2.parquet
+fetch hits_3.parquet
+fetch hits_4.parquet
+fetch hits_5.parquet
+fetch hits_6.parquet
+fetch hits_7.parquet
+fetch hits_8.parquet
+fetch hits_9.parquet
+fetch hits_10.parquet
+fetch hits_11.parquet
+fetch hits_12.parquet
+fetch hits_13.parquet
+fetch hits_14.parquet
+fetch hits_15.parquet
+fetch hits_16.parquet
+fetch hits_17.parquet
+fetch hits_18.parquet
+fetch hits_19.parquet
+duckdb 2.0.0: 20000000 rows from 20 files, threads=4
+  Q16 as written     median   415.4 ms   best   394.6 ms
+     counts: 29097 16854 10597 6019 2994 2827 2780 2496 2296 2259
+  Q16 on hashed key  median   224.5 ms   best   216.4 ms
+     counts: 29097 16854 10597 6019 2994 2827 2780 2496 2296 2259
+wrote 20000000 keys to /home/runner/work/groupcut/groupcut/data/q16.u64

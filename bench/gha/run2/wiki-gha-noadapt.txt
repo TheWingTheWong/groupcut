@@ -1,4 +1,4 @@
-loaded 34558052 rows from 6 file(s) in 2.5 s (gunzip + parse + hash; not part of the query times below)
+loaded 34558052 rows from 6 file(s) in 3.1 s (gunzip + parse + hash; not part of the query times below)
 
 SELECT domain_code, page_title, SUM(count_views) FROM pageviews GROUP BY domain_code, page_title ORDER BY 2 DESC LIMIT 10
 
@@ -14,9 +14,9 @@ SELECT domain_code, page_title, SUM(count_views) FROM pageviews GROUP BY domain_
   10.      81265  ja.m メインページ
 
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 520.0     256.5       0.0     240.1    1.00x    1.00x  256/256        0.0%
-  partition totals           558.0     298.4       0.0     236.6    0.93x    1.01x  256/256        0.0%
-  slots (16)                 350.9     294.6       0.0      27.8    1.48x    8.64x   14/256       94.5%
-  slots (16) + filter        354.4     295.4       0.0      26.1    1.47x    9.20x   14/256       96.0%
+  full merge                 631.6     311.0       0.0     286.3    1.00x    1.00x  256/256        0.0%
+  partition totals           660.0     348.1       0.0     285.6    0.96x    1.00x  256/256        0.0%
+  slots (16)                 408.6     346.2       0.0      33.4    1.55x    8.56x   14/256       94.5%
+  slots (16) + filter        410.6     349.5       0.0      30.0    1.54x    9.56x   14/256       96.0%
   18341211 distinct pages, 34558052 partial aggregates across 256 partitions; answers identical across strategies
 wrote bench/wiki-gha-noadapt.json

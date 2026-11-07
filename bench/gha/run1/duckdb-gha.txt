@@ -1,5 +1,5 @@
-duckdb 2.0.0: loaded 34558052 rows in 7.0 s, threads=4
-  string keys  median  2087.2 ms   best  2068.8 ms   (7 runs)
+duckdb 2.0.0: loaded 34558052 rows in 7.3 s, threads=4
+  string keys  median  2511.6 ms   best  2461.4 ms   (7 runs)
      1.     639163  en.m Main_Page
      2.     421216  en Main_Page
      3.     158413  en.m Wikipedia:Featured_pictures
@@ -10,4 +10,4 @@ duckdb 2.0.0: loaded 34558052 rows in 7.0 s, threads=4
      8.      90311  en.m Special:Search
      9.      86861  en Special:Search
     10.      81265  ja.m メインページ
-  hashed keys  median   905.5 ms   best   874.3 ms   (7 runs)
+  hashed keys  median  1084.1 ms   best  1055.9 ms   (7 runs)

@@ -1,19 +1,19 @@
-20000000 rows, Zipf(s=0.8) over 4000000 keys, generated in 1539 ms; 4 threads, 256 partitions
+20000000 rows, Zipf(s=0.8) over 4000000 keys, generated in 2003 ms; 4 threads, 256 partitions
 
 SELECT key, COUNT(*) FROM t GROUP BY key ORDER BY 2 DESC LIMIT 10
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 238.3     148.6       0.0      80.9    1.00x    1.00x  256/256        0.0%
-  partition totals           246.2     157.1       0.0      81.7    0.97x    0.99x  256/256        0.0%
-  slots (16)                 184.7     167.6       0.0      11.8    1.29x    6.85x   11/256       95.5%
-  slots (16) + filter        185.0     165.4       0.0      12.2    1.29x    6.61x   11/256       96.4%
-  3358032 distinct groups, 17676625 partial aggregates to merge; all 4 strategies match the reference (HashMap + sort, 1757 ms)
+  full merge                 280.2     174.8       0.0     101.5    1.00x    1.00x  256/256        0.0%
+  partition totals           291.7     186.4       0.0     100.9    0.96x    1.01x  256/256        0.0%
+  slots (16)                 209.1     192.7       0.0      12.0    1.34x    8.46x   12/256       95.1%
+  slots (16) + filter        207.7     194.3       0.0      11.9    1.35x    8.56x   11/256       96.2%
+  3358032 distinct groups, 17676199 partial aggregates to merge; all 4 strategies match the reference (HashMap + sort, 2324 ms)
   top 3: b800bd6c02472607=199579  cb30a855101ade54=114557  e40db472c9c1cd82=82823
 
 SELECT key, SUM(v) FROM t GROUP BY key ORDER BY 2 DESC LIMIT 10
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 243.9     151.2       0.0      83.4    1.00x    1.00x  256/256        0.0%
-  partition totals           262.3     170.0       0.0      82.6    0.93x    1.01x  256/256        0.0%
-  slots (16)                 188.6     171.7       0.0      11.7    1.29x    7.12x   11/256       95.5%
-  slots (16) + filter        189.4     170.6       0.0      11.5    1.29x    7.26x   12/256       96.2%
-  3358032 distinct groups, 17676475 partial aggregates to merge; all 4 strategies match the reference (HashMap + sort, 1770 ms)
+  full merge                 265.7     172.0       0.0      92.4    1.00x    1.00x  256/256        0.0%
+  partition totals           289.8     195.6       0.0      92.7    0.92x    1.00x  256/256        0.0%
+  slots (16)                 209.7     196.1       0.0      12.1    1.27x    7.67x   11/256       95.5%
+  slots (16) + filter        214.7     197.0       0.1      12.7    1.24x    7.30x   12/256       96.2%
+  3358032 distinct groups, 17676810 partial aggregates to merge; all 4 strategies match the reference (HashMap + sort, 2116 ms)
   top 3: b800bd6c02472607=10095393  cb30a855101ade54=5795310  e40db472c9c1cd82=4192565

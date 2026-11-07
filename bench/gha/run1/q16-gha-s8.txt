@@ -1,0 +1,21 @@
+loaded 20000000 keys from data/q16.u64 in 194 ms
+
+SELECT key, COUNT(*) FROM t GROUP BY key ORDER BY 2 DESC LIMIT 10
+
+   1.      29097  48de42715de4a98d
+   2.      16854  888299c117e8763e
+   3.      10597  8690c35503c7c065
+   4.       6019  cccd3f7a6890a7c8
+   5.       2994  d9c8ab1941056c47
+   6.       2827  a561510ad26e6ce3
+   7.       2780  f558b11ce46130f7
+   8.       2496  e8855cc7bed12405
+   9.       2296  2a4c6a97058e733a
+  10.       2259  0729d83f7cbad60b
+
+  strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
+  full merge                 134.6      89.8       0.0      38.3    1.00x    1.00x  256/256        0.0%
+  partition totals           137.9      93.7       0.0      37.5    0.98x    1.02x  256/256        0.0%
+  slots (256)                111.8     101.0       0.4       2.9    1.20x   13.13x   13/256       94.5%
+  slots (256) + filter       110.1     101.1       0.4       2.2    1.22x   17.07x   13/256       97.8%
+  4432006 distinct keys, 6394479 partial aggregates; answers identical across strategies

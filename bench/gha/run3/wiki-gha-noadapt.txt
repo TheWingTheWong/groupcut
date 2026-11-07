@@ -14,9 +14,9 @@ SELECT domain_code, page_title, SUM(count_views) FROM pageviews GROUP BY domain_
   10.      81265  ja.m メインページ
 
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 701.9     329.6       0.0     331.7    1.00x    1.00x  256/256        0.0%
-  partition totals           748.7     372.5       0.0     336.0    0.94x    0.99x  256/256        0.0%
-  slots (16)                 450.1     368.5       0.0      35.8    1.56x    9.28x   14/256       94.5%
-  slots (16) + filter        444.4     367.8       0.0      32.5    1.58x   10.20x   14/256       96.0%
+  full merge                 649.3     330.4       0.0     285.7    1.00x    1.00x  256/256        0.0%
+  partition totals           697.4     367.2       0.0     287.1    0.93x    1.00x  256/256        0.0%
+  slots (16)                 446.1     367.8       0.0      34.4    1.46x    8.31x   14/256       94.5%
+  slots (16) + filter        438.4     366.8       0.0      30.9    1.48x    9.24x   14/256       96.0%
   18341211 distinct pages, 34558052 partial aggregates across 256 partitions; answers identical across strategies
 wrote bench/wiki-gha-noadapt.json

@@ -284,6 +284,76 @@ def slots_chart(res):
     svg.save(ASSETS / "slots.svg")
 
 
+def sizing_chart(run_dir):
+    """Partials skipped vs (partitions x slots) / (sigma / tau), every dataset."""
+    run_dir = Path(run_dir)
+    syn_st = {float(k): v["sigma_over_tau"] for k, v in json.loads((run_dir.parent / "sigma-tau-synthetic.json").read_text()).items()}
+    pts = []  # (dataset, label, ratio, skipped %)
+
+    def add(dataset, label, sigma_over_tau, run):
+        name = run["strategy"]
+        if name == "full merge" or name.endswith("+ filter"):
+            return
+        slots = 1 if name == "partition totals" else int(name.split("(")[1].split(")")[0])
+        counters = run["partitions"] * slots
+        skipped = 100 * (1 - run["entries_merged"] / run["local_entries"]) if run["local_entries"] else 0
+        pts.append((dataset, f"{label}: {run['partitions']} x {slots}", counters / sigma_over_tau, skipped))
+
+    res = json.loads((run_dir / "results-gha.json").read_text())
+    for p in res["skew"]:
+        for r in p["runs"]:
+            add("synthetic Zipf", f"s={p['s']}", syn_st[float(p["s"])], r)
+    for r in res["slots"]:
+        add("synthetic Zipf", "s=0.8", syn_st[float(res.get("slots_s", 0.8))], r)
+    for p in res["partitions"]:
+        for r in p["runs"]:
+            add("synthetic Zipf", "s=1.0", syn_st[1.0], r)
+    for f in ["wiki-gha.json", "wiki-gha-p10.json", "wiki-gha-p12.json"]:
+        w = json.loads((run_dir / f).read_text())
+        sigma = sum(x[0] for x in w["detail"][1])
+        tau = 81265  # 10th value of the answer, identical in every run
+        for r in w["runs"]:
+            add("Wikipedia pageviews", "wiki", sigma / tau, r)
+    q16_tau = 2259  # 10th count of Q16 on 20 partitions (DuckDB and groupcut agree)
+    for f in ["q16-gha.json", "q16-gha-s8.json", "q16-gha-p12.json"]:
+        q = json.loads((run_dir / f).read_text())
+        for r in q["runs"]:
+            add("ClickBench Q16", "Q16", q["rows"] / q16_tau, r)
+
+    W, H = 860, 430
+    ox, oy, pw, ph = 80, 96, 620, 250
+    svg = Svg(W, H)
+    svg.text(24, 32, "The sketch prunes once there are more counters than \u03a3/\u03c4 (runner 1)", 16, INK, weight=600)
+    svg.text(24, 54, f"{len(pts)} configurations on three datasets. x: partitions \u00d7 slots divided by (total of the aggregate / k-th value). "
+             "Hover a point for its setup.", 12, INK2)
+    lo, hi = -4, 2
+    def X(r):
+        r = min(max(r, 10 ** lo), 10 ** hi)
+        return ox + (math.log10(r) - lo) / (hi - lo) * pw
+    def Y(v):
+        return oy + ph - v / 100 * ph
+    for v in range(0, 101, 25):
+        svg.line(ox, Y(v), ox + pw, Y(v), GRID)
+        svg.text(ox - 8, Y(v) + 4, f"{v}%", 11, MUTED, "end")
+    for e in range(lo, hi + 1):
+        svg.text(X(10 ** e), oy + ph + 16, f"{10 ** e:g}", 11, MUTED, "middle")
+    svg.line(ox, oy + ph, ox + pw, oy + ph, AXIS)
+    svg.line(X(1), oy - 6, X(1), oy + ph, AXIS, 1.5)
+    svg.text(X(1) + 6, oy + ph - 40, "counters = \u03a3/\u03c4", 11, INK2)
+    svg.text(ox + pw / 2, oy + ph + 36, "(partitions \u00d7 slots) / (\u03a3/\u03c4), log scale", 11.5, INK2, "middle")
+    svg.text(ox, oy - 14, "partials skipped by partition pruning", 13, INK, weight=600)
+    colors = {"synthetic Zipf": S3, "Wikipedia pageviews": S1, "ClickBench Q16": S2}
+    for ds, label, r, v in pts:
+        svg.add(f'<circle cx="{X(r):.1f}" cy="{Y(v):.1f}" r="5" fill="{colors[ds]}" fill-opacity="0.85" stroke="{SURFACE}" stroke-width="2">'
+                f"<title>{esc(ds)}, {esc(label)}: ratio {r:.2f}, {v:.1f}% skipped</title></circle>")
+    lx = ox
+    for ds, c in colors.items():
+        svg.add(f'<circle cx="{lx + 6}" cy="{H - 26}" r="5" fill="{c}"/>')
+        svg.text(lx + 16, H - 22, ds, 12, INK2)
+        lx += 16 + len(ds) * 6.8 + 30
+    svg.save(ASSETS / "sizing.svg")
+
+
 def main():
     ASSETS.mkdir(exist_ok=True)
     args = sys.argv[1:] or ["bench/gha/run1/wiki-gha.json", "bench/gha/run1/results-gha.json"]
@@ -295,6 +365,9 @@ def main():
         if "skew" in d:
             skew_chart(d)
             slots_chart(d)
+            run_dir = (ROOT / a).parent if not Path(a).is_absolute() else Path(a).parent
+            if (run_dir / "q16-gha-s8.json").exists():
+                sizing_chart(run_dir)
 
 
 if __name__ == "__main__":

@@ -1,131 +1,131 @@
 == skew sweep: 20000000 rows over 4000000 keys, COUNT(*), k=10, 4 threads ==
 -- s = 0
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 309.0     204.9       0.0      98.9    1.00x    1.00x  256/256        0.0%
-  partition totals           342.7     225.2       0.0     104.3    0.90x    0.95x  256/256        0.0%
-  slots (16)                 332.5     227.2       0.0     101.6    0.93x    0.97x  256/256        0.0%
-  slots (16) + filter        334.8     228.4       0.0     100.5    0.92x    0.98x  256/256        0.0%
+  full merge                 245.2     171.4       0.0      66.9    1.00x    1.00x  256/256        0.0%
+  partition totals           251.4     180.2       0.0      67.3    0.98x    1.00x  256/256        0.0%
+  slots (16)                 256.2     184.5       0.0      67.1    0.96x    1.00x  256/256        0.0%
+  slots (16) + filter        260.2     185.8       0.0      67.1    0.94x    1.00x  256/256        0.0%
 -- s = 0.5
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 314.1     209.5       0.0      98.9    1.00x    1.00x  256/256        0.0%
-  partition totals           330.4     218.1       0.0     100.9    0.95x    0.98x  256/256        0.0%
-  slots (16)                 331.9     226.8       0.0     101.3    0.95x    0.98x  256/256        0.0%
-  slots (16) + filter        332.1     227.6       0.0     100.0    0.95x    0.99x  256/256        0.0%
+  full merge                 241.4     171.6       0.0      66.9    1.00x    1.00x  256/256        0.0%
+  partition totals           251.4     180.3       0.0      67.1    0.96x    1.00x  256/256        0.0%
+  slots (16)                 255.8     185.1       0.0      67.1    0.94x    1.00x  256/256        0.0%
+  slots (16) + filter        266.0     185.1       0.0      67.1    0.91x    1.00x  256/256        0.0%
 -- s = 0.8
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 240.6     146.1       0.0      92.1    1.00x    1.00x  256/256        0.0%
-  partition totals           255.1     156.3       0.0      92.6    0.94x    0.99x  256/256        0.0%
-  slots (16)                 178.6     165.5       0.0      11.1    1.35x    8.27x   13/256       94.7%
-  slots (16) + filter        181.5     160.4       0.0      11.3    1.33x    8.12x   11/256       96.3%
+  full merge                 186.0     125.4       0.0      59.4    1.00x    1.00x  256/256        0.0%
+  partition totals           200.8     136.3       0.0      60.1    0.93x    0.99x  256/256        0.0%
+  slots (16)                 157.1     141.0       0.0       8.6    1.18x    6.94x   11/256       95.5%
+  slots (16) + filter        156.4     139.2       0.0       8.6    1.19x    6.87x   13/256       96.2%
 -- s = 1
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 167.6     119.3       0.0      48.1    1.00x    1.00x  256/256        0.0%
-  partition totals           131.4     125.7       0.0       5.6    1.28x    8.52x   17/256       93.1%
-  slots (16)                 134.7     129.4       0.0       4.7    1.24x   10.18x   12/256       95.1%
-  slots (16) + filter        131.9     129.6       0.0       2.4    1.27x   20.14x   11/256       97.4%
+  full merge                 136.2     103.0       0.0      32.7    1.00x    1.00x  256/256        0.0%
+  partition totals           111.8     107.1       0.0       4.0    1.22x    8.10x   17/256       93.1%
+  slots (16)                 113.5     110.5       0.0       1.9    1.20x   17.38x   11/256       95.5%
+  slots (16) + filter        114.3     110.6       0.0       3.3    1.19x    9.90x   12/256       97.0%
 -- s = 1.2
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                  73.1      58.7       0.0      14.3    1.00x    1.00x  256/256        0.0%
-  partition totals            61.7      60.7       0.0       0.9    1.19x   15.92x   11/256       95.5%
-  slots (16)                  63.0      61.9       0.0       0.9    1.16x   16.06x   11/256       95.5%
-  slots (16) + filter         67.4      66.4       0.0       0.8    1.09x   17.69x   11/256       97.3%
+  full merge                  60.8      51.1       0.0       9.7    1.00x    1.00x  256/256        0.0%
+  partition totals            52.8      52.0       0.0       0.6    1.15x   15.09x   11/256       95.5%
+  slots (16)                  54.6      53.6       0.0       0.7    1.11x   13.33x   10/256       95.9%
+  slots (16) + filter         54.3      53.6       0.0       0.6    1.12x   16.90x   11/256       97.3%
 -- s = 1.5
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                  28.9      27.1       0.0       1.5    1.00x    1.00x  256/256        0.0%
-  partition totals            27.7      27.3       0.0       0.2    1.05x    6.43x   11/256       95.5%
-  slots (16)                  27.8      27.4       0.0       0.2    1.04x    7.01x   11/256       95.5%
-  slots (16) + filter         28.2      27.8       0.0       0.2    1.03x    6.63x   11/256       97.8%
+  full merge                  24.3      23.1       0.0       1.1    1.00x    1.00x  256/256        0.0%
+  partition totals            23.6      23.4       0.0       0.2    1.03x    7.01x   11/256       95.5%
+  slots (16)                  23.8      23.5       0.0       0.2    1.02x    6.96x   11/256       95.5%
+  slots (16) + filter         23.8      23.5       0.0       0.2    1.02x    6.69x   11/256       97.8%
 
 == slot ablation: s = 0.8, 256 partitions ==
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 241.4     144.7       0.0      92.8    1.00x    1.00x  256/256        0.0%
-  partition totals           252.9     155.9       0.0      90.4    0.95x    1.03x  256/256        0.0%
-  slots (1) + filter         255.0     158.5       0.0      91.3    0.95x    1.02x  256/256        0.0%
-  slots (2)                  257.9     164.3       0.0      90.5    0.94x    1.03x  255/256        0.3%
-  slots (2) + filter         256.6     162.4       0.0      89.5    0.94x    1.04x  255/256        2.9%
-  slots (4)                  182.6     163.6       0.0      16.7    1.32x    5.55x   27/256       89.1%
-  slots (4) + filter         196.9     170.5       0.0      17.8    1.23x    5.23x   47/256       91.0%
-  slots (8)                  179.9     163.8       0.0      12.0    1.34x    7.73x   14/256       94.3%
-  slots (8) + filter         180.6     163.1       0.0      12.1    1.34x    7.65x   14/256       95.5%
-  slots (16)                 191.2     173.5       0.0      11.8    1.26x    7.88x   13/256       94.7%
-  slots (16) + filter        178.9     164.2       0.0      11.3    1.35x    8.20x   11/256       95.7%
-  slots (32)                 183.7     167.3       0.1      11.7    1.31x    7.92x   11/256       95.5%
-  slots (32) + filter        185.6     168.1       0.1      10.9    1.30x    8.55x   11/256       97.1%
-  slots (64)                 190.2     171.4       0.1      11.5    1.27x    8.07x   12/256       95.1%
-  slots (64) + filter        190.3     172.1       0.1      10.9    1.27x    8.51x   11/256       97.5%
-  slots (128)                198.9     177.2       0.2      11.4    1.21x    8.15x   13/256       94.7%
-  slots (128) + filter       193.8     177.8       0.2      10.8    1.25x    8.60x   12/256       98.0%
-  slots (256)                201.3     177.8       0.4      12.8    1.20x    7.24x   11/256       95.5%
-  slots (256) + filter       192.5     180.2       0.4      10.3    1.25x    8.98x   11/256       98.1%
+  full merge                 194.7     130.6       0.0      58.0    1.00x    1.00x  256/256        0.0%
+  partition totals           201.3     135.9       0.0      59.2    0.97x    0.98x  256/256        0.0%
+  slots (1) + filter         200.8     137.6       0.0      59.9    0.97x    0.97x  256/256        0.0%
+  slots (2)                  200.8     141.2       0.0      59.1    0.97x    0.98x  255/256        0.3%
+  slots (2) + filter         205.8     140.1       0.0      59.6    0.95x    0.97x  255/256        2.9%
+  slots (4)                  159.5     139.7       0.0      11.9    1.22x    4.89x   27/256       89.1%
+  slots (4) + filter         158.0     139.5       0.0      11.2    1.23x    5.18x   27/256       93.3%
+  slots (8)                  156.4     140.2       0.0       8.3    1.24x    6.96x   16/256       93.5%
+  slots (8) + filter         155.2     139.2       0.0       8.1    1.25x    7.16x   16/256       95.0%
+  slots (16)                 154.4     139.9       0.0       8.1    1.26x    7.16x   13/256       94.7%
+  slots (16) + filter        158.7     140.8       0.0       8.3    1.23x    6.98x   12/256       96.3%
+  slots (32)                 160.2     143.8       0.0       8.1    1.22x    7.20x   12/256       95.1%
+  slots (32) + filter        158.7     143.9       0.0       7.2    1.23x    8.05x   12/256       97.0%
+  slots (64)                 159.0     144.4       0.1       8.4    1.22x    6.89x   11/256       95.5%
+  slots (64) + filter        161.0     145.4       0.1       8.0    1.21x    7.23x   11/256       97.6%
+  slots (128)                168.5     152.3       0.2       7.8    1.16x    7.43x   12/256       95.1%
+  slots (128) + filter       166.8     151.4       0.2       7.1    1.17x    8.11x   12/256       98.0%
+  slots (256)                175.0     156.3       0.3       8.6    1.11x    6.72x   12/256       95.1%
+  slots (256) + filter       174.8     157.3       0.6       7.6    1.11x    7.61x   12/256       98.1%
 
 == k sweep: s = 1.0 ==
 -- k = 1
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 166.9     118.3       0.0      48.5    1.00x    1.00x  256/256        0.0%
-  partition totals           126.3     124.7       0.0       1.4    1.32x   33.81x    3/256       98.8%
-  slots (16)                 132.2     129.5       0.0       1.2    1.26x   40.54x    4/256       98.3%
-  slots (16) + filter        132.8     129.7       0.0       1.5    1.26x   32.70x    4/256       98.3%
+  full merge                 135.0     101.8       0.0      32.3    1.00x    1.00x  256/256        0.0%
+  partition totals           107.6     106.6       0.0       0.9    1.25x   37.35x    4/256       98.3%
+  slots (16)                 112.4     109.7       0.0       2.7    1.20x   11.95x    4/256       98.3%
+  slots (16) + filter        112.3     109.5       0.0       2.7    1.20x   11.93x    4/256       98.3%
 -- k = 10
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 169.0     118.7       0.0      49.4    1.00x    1.00x  256/256        0.0%
-  partition totals           132.4     125.4       0.0       5.6    1.28x    8.86x   17/256       93.1%
-  slots (16)                 134.4     128.9       0.0       4.7    1.26x   10.45x   12/256       95.1%
-  slots (16) + filter        134.8     129.6       0.0       2.4    1.25x   20.27x   11/256       97.1%
+  full merge                 135.3     102.4       0.0      32.7    1.00x    1.00x  256/256        0.0%
+  partition totals           109.9     106.5       0.0       3.0    1.23x   10.95x   17/256       93.1%
+  slots (16)                 113.4     109.6       0.0       3.6    1.19x    9.21x   11/256       95.5%
+  slots (16) + filter        111.0     109.1       0.0       1.8    1.22x   18.28x   11/256       97.1%
 -- k = 100
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 169.0     118.6       0.0      49.7    1.00x    1.00x  256/256        0.0%
-  partition totals           182.9     124.9       0.0      49.5    0.92x    1.00x  256/256        0.0%
-  slots (16)                 150.1     129.4       0.0      20.8    1.13x    2.39x  108/256       56.8%
-  slots (16) + filter        146.9     129.3       0.0      17.4    1.15x    2.86x  108/256       79.6%
+  full merge                 134.8     101.9       0.0      32.9    1.00x    1.00x  256/256        0.0%
+  partition totals           139.2     106.6       0.0      33.0    0.97x    1.00x  256/256        0.0%
+  slots (16)                 125.3     109.3       0.0      15.0    1.08x    2.18x  108/256       56.9%
+  slots (16) + filter        122.5     109.1       0.0      12.8    1.10x    2.56x  108/256       79.6%
 -- k = 1000
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 166.7     118.8       0.0      47.3    1.00x    1.00x  256/256        0.0%
-  partition totals           172.6     124.7       0.0      47.3    0.97x    1.00x  256/256        0.0%
-  slots (16)                 177.6     129.7       0.0      47.2    0.94x    1.00x  256/256        0.0%
-  slots (16) + filter        180.2     130.3       0.0      49.5    0.92x    0.96x  256/256        0.0%
+  full merge                 137.4     103.2       0.0      33.2    1.00x    1.00x  256/256        0.0%
+  partition totals           142.8     107.9       0.0      33.5    0.96x    0.99x  256/256        0.0%
+  slots (16)                 144.1     111.4       0.0      33.1    0.95x    1.00x  256/256        0.0%
+  slots (16) + filter        143.6     109.5       0.0      32.3    0.96x    1.03x  256/256        0.0%
 -- k = 10000
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 169.5     118.5       0.0      49.6    1.00x    1.00x  256/256        0.0%
-  partition totals           175.3     124.6       0.0      49.4    0.97x    1.00x  256/256        0.0%
-  slots (16)                 179.8     129.2       0.0      49.3    0.94x    1.01x  256/256        0.0%
-  slots (16) + filter        182.3     130.4       0.0      48.8    0.93x    1.02x  256/256        0.0%
+  full merge                 137.5     102.1       0.0      34.8    1.00x    1.00x  256/256        0.0%
+  partition totals           142.9     106.2       0.0      34.8    0.96x    1.00x  256/256        0.0%
+  slots (16)                 145.1     109.4       0.0      34.6    0.95x    1.01x  256/256        0.0%
+  slots (16) + filter        146.2     109.3       0.0      35.4    0.94x    0.98x  256/256        0.0%
 
 == partition sweep: s = 1.0 ==
 -- 16 partitions
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 264.5     117.1       0.0     147.3    1.00x    1.00x   16/16         0.0%
-  partition totals           270.6     123.6       0.0     146.9    0.98x    1.00x   16/16         0.0%
-  slots (16)                 244.4     125.8       0.0     118.5    1.08x    1.24x   11/16        31.3%
-  slots (16) + filter        235.6     124.8       0.0     110.5    1.12x    1.33x   11/16        47.2%
+  full merge                 216.7      99.6       0.0     117.4    1.00x    1.00x   16/16         0.0%
+  partition totals           220.3     102.6       0.0     117.4    0.98x    1.00x   16/16         0.0%
+  slots (16)                 198.7     105.7       0.0      93.6    1.09x    1.25x   11/16        31.3%
+  slots (16) + filter        192.6     105.5       0.0      87.2    1.13x    1.35x   12/16        50.4%
 -- 64 partitions
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 182.8     117.0       0.0      65.4    1.00x    1.00x   64/64         0.0%
-  partition totals           190.3     123.7       0.0      66.1    0.96x    0.99x   64/64         0.0%
-  slots (16)                 138.4     126.2       0.0      12.1    1.32x    5.41x   10/64        84.4%
-  slots (16) + filter        136.4     125.7       0.0      10.5    1.34x    6.25x   10/64        88.3%
+  full merge                 147.7     100.8       0.0      46.8    1.00x    1.00x   64/64         0.0%
+  partition totals           151.4     105.3       0.0      45.2    0.98x    1.04x   64/64         0.0%
+  slots (16)                 117.7     108.8       0.0       9.2    1.26x    5.09x   10/64        84.4%
+  slots (16) + filter        115.5     107.7       0.0       7.8    1.28x    6.03x   10/64        88.3%
 -- 256 partitions
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 167.5     118.5       0.0      49.0    1.00x    1.00x  256/256        0.0%
-  partition totals           129.0     124.7       0.0       3.8    1.30x   12.76x   17/256       93.1%
-  slots (16)                 134.5     129.3       0.0       4.7    1.25x   10.37x   11/256       95.5%
-  slots (16) + filter        134.6     128.9       0.0       4.5    1.24x   10.99x   11/256       97.1%
+  full merge                 134.3     102.1       0.0      32.0    1.00x    1.00x  256/256        0.0%
+  partition totals           111.0     106.4       0.0       4.0    1.21x    7.92x   19/256       92.3%
+  slots (16)                 111.6     109.4       0.0       2.0    1.20x   15.87x   11/256       95.5%
+  slots (16) + filter        111.1     109.2       0.0       1.6    1.21x   20.21x   12/256       97.1%
 -- 1024 partitions
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 170.7     125.3       0.0      44.3    1.00x    1.00x 1024/1024       0.0%
-  partition totals           135.4     133.8       0.0       0.8    1.26x   54.38x   12/1024      98.7%
-  slots (16)                 146.9     144.2       0.1       1.3    1.16x   34.77x   13/1024      98.5%
-  slots (16) + filter        145.9     143.4       0.1       1.3    1.17x   34.93x   13/1024      99.1%
+  full merge                 138.8     108.3       0.0      29.7    1.00x    1.00x 1024/1024       0.0%
+  partition totals           115.7     114.0       0.0       1.0    1.20x   30.37x   12/1024      98.7%
+  slots (16)                 121.5     119.8       0.1       1.0    1.14x   30.94x   12/1024      98.7%
+  slots (16) + filter        121.3     119.5       0.1       1.0    1.14x   30.52x   12/1024      99.1%
 -- 4096 partitions
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                 178.6     138.9       0.0      37.5    1.00x    1.00x 4096/4096       0.0%
-  partition totals           152.9     150.2       0.1       0.4    1.17x   84.04x   13/4096      99.6%
-  slots (16)                 166.4     163.4       0.5       0.4    1.07x   85.20x   13/4096      99.6%
-  slots (16) + filter        166.0     163.0       0.5       0.4    1.08x   87.79x   13/4096      99.7%
+  full merge                 147.4     117.8       0.0      27.7    1.00x    1.00x 4096/4096       0.0%
+  partition totals           126.8     124.6       0.1       0.3    1.16x   92.56x   13/4096      99.6%
+  slots (16)                 136.3     133.9       0.4       0.3    1.08x   85.44x   13/4096      99.6%
+  slots (16) + filter        135.7     133.2       0.4       0.3    1.09x   87.41x   13/4096      99.7%
 
 == overhead: uniform keys, 10000000 rows, 1 thread, best of 15 ==
-  full merge             best    396.5 ms  (+0.0% vs full merge)  merged 256/256
-  partition totals       best    409.6 ms  (+3.3% vs full merge)  merged 256/256
-  slots (16)             best    419.4 ms  (+5.8% vs full merge)  merged 256/256
-  slots (16) + filter    best    418.8 ms  (+5.6% vs full merge)  merged 256/256
+  full merge             best    353.5 ms  (+0.0% vs full merge)  merged 256/256
+  partition totals       best    369.2 ms  (+4.4% vs full merge)  merged 256/256
+  slots (16)             best    371.8 ms  (+5.2% vs full merge)  merged 256/256
+  slots (16) + filter    best    373.8 ms  (+5.8% vs full merge)  merged 256/256
 
 wrote bench/results-gha.json

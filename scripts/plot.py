@@ -210,29 +210,32 @@ def skew_chart(res):
     names = [r["strategy"] for r in sweep[0]["runs"]][1:]
     W, H = 1000, 420
     svg = Svg(W, H)
-    svg.text(24, 32, "Speedup over a full merge, by key skew (synthetic, COUNT(*), k = 10)", 16, INK, weight=600)
+    svg.text(24, 32, "What gets pruned, and what it buys, by key skew (synthetic, COUNT(*), k = 10)", 16, INK, weight=600)
     svg.text(
         24, 54,
         f"{res['rows'] / 1e6:.0f}M rows over {res['groups'] / 1e6:.0f}M keys, Zipf exponent s (0 = uniform), "
-        f"{res['machine']['threads']} threads, {MACHINE.get(res['machine']['os'], res['machine']['os'])}, median of {res['reps']}. Gray line: 1.0 = full merge.",
+        f"{res['machine']['threads']} threads, {MACHINE.get(res['machine']['os'], res['machine']['os'])}, median of {res['reps']}. Right: gray line = full merge.",
         12.5, INK2,
     )
     pw, ph = 330, 230
-    panels = [("merge phase", "merge_ms"), ("end to end", "total_ms")]
+    total_parts = sweep[0]["runs"][0]["partitions"]
+    panels = [(f"partitions merged (of {total_parts})", "partitions_merged"), ("end-to-end speedup (x)", "total_ms")]
     for pi, (title, field) in enumerate(panels):
         series = []
         for name in names:
             ys = []
             for p in sweep:
-                base = p["runs"][0][field]
                 r = next(r for r in p["runs"] if r["strategy"] == name)
-                ys.append(base / r[field])
+                ys.append(r[field] if field == "partitions_merged" else p["runs"][0][field] / r[field])
             series.append((name, STRATEGY_COLOR[name], ys))
-        ymax = max(max(s[2]) for s in series)
-        ymax = math.ceil(ymax / (5 if ymax > 10 else 0.5)) * (5 if ymax > 10 else 0.5)
+        if field == "partitions_merged":
+            ymax = total_parts
+        else:
+            ymax = math.ceil(max(max(s[2]) for s in series) / 0.5) * 0.5
         ox = 70 + pi * (pw + 230)
-        X, Y = line_panel(svg, ox, 100, pw, ph, xs, series, f"{title} speedup (x)", ymax, "Zipf exponent s")
-        svg.line(ox, Y(1), ox + pw, Y(1), AXIS, 1.5)
+        X, Y = line_panel(svg, ox, 100, pw, ph, xs, series, title, ymax, "Zipf exponent s")
+        if field != "partitions_merged":
+            svg.line(ox, Y(1), ox + pw, Y(1), AXIS, 1.5)
     lx = 70
     for name in names:
         svg.rect(lx, H - 30, 12, 12, STRATEGY_COLOR[name], 2)

@@ -1,0 +1,13 @@
+duckdb 2.0.0: loaded 34558052 rows in 5.8 s, threads=4
+  string keys  median  1717.4 ms   best  1688.8 ms   (7 runs)
+     1.     639163  en.m Main_Page
+     2.     421216  en Main_Page
+     3.     158413  en.m Wikipedia:Featured_pictures
+     4.     150185  de Wikipedia:Hauptseite
+     5.     130321  en.m Tung_Tung_Tung_Sahur
+     6.     109430  commons.m.m File:LinkedIn_icon.svg
+     7.     105945  de.m Wikipedia:Hauptseite
+     8.      90311  en.m Special:Search
+     9.      86861  en Special:Search
+    10.      81265  ja.m メインページ
+  hashed keys  median   702.6 ms   best   690.7 ms   (7 runs)

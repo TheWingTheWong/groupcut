@@ -1,0 +1,19 @@
+20000000 rows, Zipf(s=0.8) over 4000000 keys, generated in 1277 ms; 4 threads, 256 partitions
+
+SELECT key, COUNT(*) FROM t GROUP BY key ORDER BY 2 DESC LIMIT 10
+  strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
+  full merge                 194.6     127.9       0.0      60.8    1.00x    1.00x  256/256        0.0%
+  partition totals           200.9     133.4       0.0      61.3    0.97x    0.99x  256/256        0.0%
+  slots (16)                 152.8     139.6       0.0       9.8    1.27x    6.19x   11/256       95.5%
+  slots (16) + filter        158.2     140.4       0.0       9.8    1.23x    6.21x   11/256       96.4%
+  3358032 distinct groups, 17676441 partial aggregates to merge; all 4 strategies match the reference (HashMap + sort, 1562 ms)
+  top 3: b800bd6c02472607=199579  cb30a855101ade54=114557  e40db472c9c1cd82=82823
+
+SELECT key, SUM(v) FROM t GROUP BY key ORDER BY 2 DESC LIMIT 10
+  strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
+  full merge                 187.5     121.4       0.0      62.6    1.00x    1.00x  256/256        0.0%
+  partition totals           202.1     137.0       0.0      62.4    0.93x    1.00x  256/256        0.0%
+  slots (16)                 147.9     136.4       0.0       8.7    1.27x    7.22x   12/256       95.1%
+  slots (16) + filter        147.8     135.4       0.0       8.9    1.27x    7.03x   11/256       96.4%
+  3358032 distinct groups, 17676577 partial aggregates to merge; all 4 strategies match the reference (HashMap + sort, 1529 ms)
+  top 3: b800bd6c02472607=10095393  cb30a855101ade54=5795310  e40db472c9c1cd82=4192565

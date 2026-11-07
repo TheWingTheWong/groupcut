@@ -1,0 +1,4 @@
+/target
+/data
+*.gz
+.DS_Store

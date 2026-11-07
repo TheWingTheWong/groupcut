@@ -115,7 +115,7 @@ fn every_configuration_matches_the_reference() {
 #[test]
 fn ties_are_broken_by_key_and_never_pruned_away() {
     // 5,000 groups with identical counts: the answer is the k smallest keys.
-    // Any pruning test that used <= instead of < would drop some of them.
+    // A slot filter that used <= instead of < would drop some of them.
     let mut keys = Vec::new();
     for round in 0..4 {
         for g in 0..5_000u64 {
@@ -159,35 +159,92 @@ fn sketch_counters_bound_every_group() {
     }
 }
 
+/// Find a key whose hash lands in `partition` (and `slot`, if given).
+fn key_in(layout: Layout, partition: usize, slot: Option<usize>, skip: &[u64]) -> u64 {
+    (1u64..)
+        .find(|&k| {
+            let h = mix(k);
+            layout.partition(h) == partition
+                && slot.map_or(true, |s| layout.slot(h) == s)
+                && !skip.contains(&k)
+        })
+        .unwrap()
+}
+
 #[test]
 fn negative_sums_do_not_break_the_bound() {
-    // A heavy group whose partials are +big and -big in different flushes:
-    // its total is small, and a slot bound that summed raw partials could
-    // cancel to below the true value of a *different* group in the slot.
-    // Clamping each partial at zero keeps the bound valid.
-    let mut keys = Vec::new();
-    let mut vals = Vec::new();
-    for i in 0..20_000u64 {
-        keys.push(1_000_000 + (i % 3_000));
-        vals.push(if (i / 3_000) % 2 == 0 { 1_000 } else { -1_000 });
-        keys.push(i % 50);
-        vals.push(7);
-    }
-    let expect = reference::top_k(&keys, &vals, AggKind::Sum, 10);
-    for slot_bits in [0, 2, 5] {
-        for threads in [1, 3, 8] {
-            let cfg = Config {
-                threads,
-                partition_bits: 3,
-                preagg_bits: 6,
-                strategy: Strategy::Prune {
-                    slot_bits,
-                    filter: true,
-                },
-            };
-            assert_eq!(top_k(&keys, &vals, AggKind::Sum, 10, &cfg).0, expect);
+    // Group `a` (total +1000) shares a slot with group `b` (total -5000).
+    // Summing raw partials would give that slot a "bound" of -4000, below the
+    // +100 of group `c` in another partition, and `a`, the right answer for
+    // k = 1, would be pruned. Clamping each partial at zero keeps the slot's
+    // bound at 1000. One thread makes partition order deterministic: `c`'s
+    // partition (bound 100) is merged first and sets the threshold to 100.
+    for slot_bits in [0, 3] {
+        let layout = Layout::new(1, slot_bits);
+        let a = key_in(layout, 0, Some(0), &[]);
+        let b = key_in(layout, 0, Some(0), &[a]);
+        let c = key_in(layout, 1, None, &[]);
+        let keys = vec![a, b, b, c];
+        let vals = vec![1000, -2500, -2500, 100];
+        let expect = reference::top_k(&keys, &vals, AggKind::Sum, 1);
+        assert_eq!(expect, vec![(a, 1000)]);
+        for filter in [false, true] {
+            for preagg_bits in [4, 10] {
+                let cfg = Config {
+                    threads: 1,
+                    partition_bits: 1,
+                    preagg_bits,
+                    strategy: Strategy::Prune { slot_bits, filter },
+                };
+                assert_eq!(
+                    top_k(&keys, &vals, AggKind::Sum, 1, &cfg).0,
+                    expect,
+                    "slot_bits={slot_bits} filter={filter}"
+                );
+            }
         }
     }
+}
+
+#[test]
+fn partitions_whose_bound_equals_the_threshold_are_merged() {
+    // 40 groups with equal counts spread over 256 partitions: most
+    // partitions hold one group, so their bound *equals* the k-th value. A
+    // group there can still win on key order, so `bound < tau` must not
+    // become `bound <= tau`.
+    let keys: Vec<u64> = (0..40u64).flat_map(|g| [g, g, g]).collect();
+    let vals = vec![1i64; keys.len()];
+    let expect: Vec<(u64, i64)> = (0..25).map(|g| (g, 3)).collect();
+    for slot_bits in [0, 4] {
+        for filter in [false, true] {
+            let cfg = Config {
+                threads: 1,
+                partition_bits: 8,
+                preagg_bits: 8,
+                strategy: Strategy::Prune { slot_bits, filter },
+            };
+            assert_eq!(top_k(&keys, &vals, AggKind::Count, 25, &cfg).0, expect);
+        }
+    }
+}
+
+#[test]
+#[should_panic(expected = "SUM overflowed i64")]
+fn sum_overflow_is_an_error_not_a_wrong_answer() {
+    // Wrapping here would turn two huge negative partials into +5 and make
+    // the clamped bound (0) lie. Overflow must fail loudly instead.
+    let keys = vec![1, 1, 2];
+    let vals = vec![i64::MIN, i64::MIN + 5, 3];
+    let cfg = Config {
+        threads: 1,
+        partition_bits: 2,
+        preagg_bits: 4,
+        strategy: Strategy::Prune {
+            slot_bits: 2,
+            filter: true,
+        },
+    };
+    top_k(&keys, &vals, AggKind::Sum, 1, &cfg);
 }
 
 #[test]

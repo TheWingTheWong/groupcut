@@ -12,6 +12,7 @@ groupcut: exact top-k GROUP BY with sketch-based partition pruning
 USAGE:
   groupcut demo  [--rows N] [--groups N] [--skew S] [--k K] [--threads T]
   groupcut bench [--rows N] [--groups N] [--reps R] [--threads T] [--out FILE]
+                 [--sections skew,slots,k,partitions,overhead]
   groupcut wiki  [--by page|title] [--agg sum|count|max] [--k K] [--reps R]
                  [--json FILE] FILES...
 
@@ -267,7 +268,7 @@ fn demo(a: &Args) {
         check_same(&m, &expect);
         print_table(&m);
         println!(
-            "  {} distinct groups, {} thread-local entries to merge; all {} strategies match the reference \
+            "  {} distinct groups, {} partial aggregates to merge; all {} strategies match the reference \
              (HashMap + sort, {:.0} ms)",
             m[0].stats.groups_merged,
             m[0].stats.local_entries,
@@ -324,6 +325,8 @@ fn bench(a: &Args) {
     let reps: usize = a.get("reps", 5);
     let threads: usize = a.get("threads", default_threads());
     let out_path = a.str("out", "bench/results.json");
+    let sections = a.str("sections", "skew,slots,k,partitions,overhead");
+    let want = |name: &str| sections.split(',').any(|s| s == name);
     let k = 10;
     let mut json = String::new();
     let _ = write!(
@@ -334,108 +337,153 @@ fn bench(a: &Args) {
     );
 
     // 1. Skew sweep: every strategy, COUNT(*), k = 10, 256 partitions.
-    println!(
-        "== skew sweep: {rows} rows over {groups} keys, COUNT(*), k={k}, {threads} threads =="
-    );
-    json.push_str(",\"skew\":[");
-    for (i, s) in [0.0, 0.5, 0.8, 1.0, 1.2, 1.5].into_iter().enumerate() {
-        let (keys, vals) = zipf_rows(rows, groups, s, 1, 100, 7, threads);
-        let m = measure(
-            &keys,
-            &vals,
-            AggKind::Count,
-            k,
-            &configs(threads, 8, &STRATEGIES),
-            reps,
+    if want("skew") {
+        println!(
+            "== skew sweep: {rows} rows over {groups} keys, COUNT(*), k={k}, {threads} threads =="
         );
-        check_same(&m, &m[0].result.clone());
-        println!("-- s = {s}");
-        print_table(&m);
-        let _ = write!(
-            json,
-            "{}{{\"s\":{s},\"runs\":{}}}",
-            if i > 0 { "," } else { "" },
-            json_list(&m)
-        );
+        json.push_str(",\"skew\":[");
+        for (i, s) in [0.0, 0.5, 0.8, 1.0, 1.2, 1.5].into_iter().enumerate() {
+            let (keys, vals) = zipf_rows(rows, groups, s, 1, 100, 7, threads);
+            let m = measure(
+                &keys,
+                &vals,
+                AggKind::Count,
+                k,
+                &configs(threads, 8, &STRATEGIES),
+                reps,
+            );
+            check_same(&m, &m[0].result.clone());
+            println!("-- s = {s}");
+            print_table(&m);
+            let _ = write!(
+                json,
+                "{}{{\"s\":{s},\"runs\":{}}}",
+                if i > 0 { "," } else { "" },
+                json_list(&m)
+            );
+        }
+        json.push(']');
     }
-    json.push(']');
 
     // 2. Slot ablation at s = 0.8, where partition totals alone prune nothing,
     //    with and without the in-partition filter.
-    let (keys, vals) = zipf_rows(rows, groups, 0.8, 1, 100, 7, threads);
-    println!("\n== slot ablation: s = 0.8, 256 partitions ==");
-    let mut strategies = vec![Strategy::Full];
-    for b in 0..=8 {
-        strategies.push(Strategy::Prune {
-            slot_bits: b,
-            filter: false,
-        });
-        strategies.push(Strategy::Prune {
-            slot_bits: b,
-            filter: true,
-        });
-    }
-    let m = measure(
-        &keys,
-        &vals,
-        AggKind::Count,
-        k,
-        &configs(threads, 8, &strategies),
-        reps,
-    );
-    check_same(&m, &m[0].result.clone());
-    print_table(&m);
-    let _ = write!(json, ",\"slots_s\":0.8,\"slots\":{}", json_list(&m));
-    drop((keys, vals));
-    let (keys, vals) = zipf_rows(rows, groups, 1.0, 1, 100, 7, threads);
-
-    // 3. k sweep at s = 1.0.
-    println!("\n== k sweep: s = 1.0 ==");
-    json.push_str(",\"k\":[");
-    for (i, kk) in [1usize, 10, 100, 1000, 10_000].into_iter().enumerate() {
-        let m = measure(
-            &keys,
-            &vals,
-            AggKind::Count,
-            kk,
-            &configs(threads, 8, &STRATEGIES),
-            reps,
-        );
-        check_same(&m, &m[0].result.clone());
-        println!("-- k = {kk}");
-        print_table(&m);
-        let _ = write!(
-            json,
-            "{}{{\"k\":{kk},\"runs\":{}}}",
-            if i > 0 { "," } else { "" },
-            json_list(&m)
-        );
-    }
-    json.push(']');
-
-    // 4. Partition count at s = 1.0.
-    println!("\n== partition sweep: s = 1.0 ==");
-    json.push_str(",\"partitions\":[");
-    for (i, pb) in [4u32, 6, 8, 10, 12].into_iter().enumerate() {
+    if want("slots") {
+        let (keys, vals) = zipf_rows(rows, groups, 0.8, 1, 100, 7, threads);
+        println!("\n== slot ablation: s = 0.8, 256 partitions ==");
+        let mut strategies = vec![Strategy::Full];
+        for b in 0..=8 {
+            strategies.push(Strategy::Prune {
+                slot_bits: b,
+                filter: false,
+            });
+            strategies.push(Strategy::Prune {
+                slot_bits: b,
+                filter: true,
+            });
+        }
         let m = measure(
             &keys,
             &vals,
             AggKind::Count,
             k,
-            &configs(threads, pb, &STRATEGIES),
+            &configs(threads, 8, &strategies),
             reps,
         );
         check_same(&m, &m[0].result.clone());
-        println!("-- {} partitions", 1 << pb);
         print_table(&m);
+        let _ = write!(json, ",\"slots_s\":0.8,\"slots\":{}", json_list(&m));
+    }
+
+    // 3. k sweep at s = 1.0.
+    if want("k") || want("partitions") {
+        let (keys, vals) = zipf_rows(rows, groups, 1.0, 1, 100, 7, threads);
+        if want("k") {
+            println!("\n== k sweep: s = 1.0 ==");
+            json.push_str(",\"k\":[");
+            for (i, kk) in [1usize, 10, 100, 1000, 10_000].into_iter().enumerate() {
+                let m = measure(
+                    &keys,
+                    &vals,
+                    AggKind::Count,
+                    kk,
+                    &configs(threads, 8, &STRATEGIES),
+                    reps,
+                );
+                check_same(&m, &m[0].result.clone());
+                println!("-- k = {kk}");
+                print_table(&m);
+                let _ = write!(
+                    json,
+                    "{}{{\"k\":{kk},\"runs\":{}}}",
+                    if i > 0 { "," } else { "" },
+                    json_list(&m)
+                );
+            }
+            json.push(']');
+        }
+
+        // 4. Partition count at s = 1.0.
+        if want("partitions") {
+            println!("\n== partition sweep: s = 1.0 ==");
+            json.push_str(",\"partitions\":[");
+            for (i, pb) in [4u32, 6, 8, 10, 12].into_iter().enumerate() {
+                let m = measure(
+                    &keys,
+                    &vals,
+                    AggKind::Count,
+                    k,
+                    &configs(threads, pb, &STRATEGIES),
+                    reps,
+                );
+                check_same(&m, &m[0].result.clone());
+                println!("-- {} partitions", 1 << pb);
+                print_table(&m);
+                let _ = write!(
+                    json,
+                    "{}{{\"partition_bits\":{pb},\"runs\":{}}}",
+                    if i > 0 { "," } else { "" },
+                    json_list(&m)
+                );
+            }
+            json.push(']');
+        }
+    }
+
+    // 5. Overhead where pruning cannot help: uniform keys, one thread (least
+    //    scheduling noise), best of 3x the reps.
+    if want("overhead") {
+        let orows = rows / 2;
+        let (keys, vals) = zipf_rows(orows, groups, 0.0, 1, 100, 7, threads);
+        println!(
+            "\n== overhead: uniform keys, {orows} rows, 1 thread, best of {} ==",
+            3 * reps
+        );
+        let m = measure(
+            &keys,
+            &vals,
+            AggKind::Count,
+            k,
+            &configs(1, 8, &STRATEGIES),
+            3 * reps,
+        );
+        check_same(&m, &m[0].result.clone());
+        for r in &m {
+            println!(
+                "  {:<22} best {:>8.1} ms  ({:+.1}% vs full merge)  merged {}/{}",
+                r.label,
+                r.total_min_ms,
+                100.0 * (r.total_min_ms / m[0].total_min_ms - 1.0),
+                r.stats.partitions_merged,
+                r.stats.partitions
+            );
+        }
         let _ = write!(
             json,
-            "{}{{\"partition_bits\":{pb},\"runs\":{}}}",
-            if i > 0 { "," } else { "" },
+            ",\"overhead_rows\":{orows},\"overhead\":{}",
             json_list(&m)
         );
     }
-    json.push_str("]}\n");
+    json.push_str("}\n");
 
     std::fs::write(&out_path, json).unwrap_or_else(|e| die(&format!("writing {out_path}: {e}")));
     println!("\nwrote {out_path}");
@@ -509,13 +557,13 @@ fn wiki_cmd(a: &Args) {
     print_table(&m);
     let full = &m[0].stats;
     println!(
-        "  {} distinct {what}s, {} thread-local entries across {} partitions; answers identical across strategies",
+        "  {} distinct {what}s, {} partial aggregates across {} partitions; answers identical across strategies",
         full.groups_merged, full.local_entries, full.partitions
     );
 
     if let Some((_, path)) = a.flags.iter().find(|(n, _)| n == "json") {
         let mut j = String::new();
-        let _ = write!(j, "{{\"rows\":{},\"files\":{},\"by\":\"{what}\",\"agg\":\"{}\",\"k\":{k},\"threads\":{threads},\"runs\":{}", keys.len(), paths.len(), agg.name(), json_list(&m));
+        let _ = write!(j, "{{\"os\":\"{}\",\"arch\":\"{}\",\"rows\":{},\"files\":{},\"by\":\"{what}\",\"agg\":\"{}\",\"k\":{k},\"threads\":{threads},\"reps\":{reps},\"runs\":{}", std::env::consts::OS, std::env::consts::ARCH, keys.len(), paths.len(), agg.name(), json_list(&m));
         // Per-partition detail of every strategy's last run, for the partition map:
         // [bound, partials, merged, filtered].
         j.push_str(",\"detail\":[");

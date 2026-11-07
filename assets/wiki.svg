@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360" font-family='system-ui, -apple-system, "Segoe UI", sans-serif'>
+<rect width="100%" height="100%" rx="8" fill="#fcfcfb"/>
+<text x="24.0" y="34.0" font-size="17" fill="#0b0b0b" text-anchor="start" font-weight="600" >Top 10 of 34.6M Wikipedia pageview rows: who skips the merge?</text>
+<text x="24.0" y="58.0" font-size="12.5" fill="#52514e" text-anchor="start" font-weight="400" >SUM(views) GROUP BY (wiki, page) ORDER BY 2 DESC LIMIT 10: 6 hourly dumps, 4 threads, Apple M2 (macOS), median of 7 runs.</text>
+<line x1="170.0" y1="84.0" x2="170.0" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="170.0" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >0.0 s</text>
+<line x1="235.2" y1="84.0" x2="235.2" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="235.2" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >0.5 s</text>
+<line x1="300.5" y1="84.0" x2="300.5" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="300.5" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >1.0 s</text>
+<line x1="365.7" y1="84.0" x2="365.7" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="365.7" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >1.5 s</text>
+<line x1="431.0" y1="84.0" x2="431.0" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="431.0" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >2.0 s</text>
+<line x1="496.2" y1="84.0" x2="496.2" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="496.2" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >2.5 s</text>
+<line x1="561.5" y1="84.0" x2="561.5" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="561.5" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >3.0 s</text>
+<line x1="626.7" y1="84.0" x2="626.7" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="626.7" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >3.5 s</text>
+<text x="158.0" y="114.0" font-size="13" fill="#0b0b0b" text-anchor="end" font-weight="500" >full merge</text>
+<rect x="170.0" y="92.0" width="232.5" height="34.0" rx="0" fill="#c3c2b7"><title>full merge: local phase 1790 ms</title></rect>
+<rect x="404.5" y="92.0" width="1.7" height="34.0" rx="0" fill="#e1e0d9"><title>sketch + bookkeeping 21 ms</title></rect>
+<path d="M408.3,92.0 h154.2 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-154.2 z" fill="#2a78d6"><title>full merge: merge phase 1212 ms</title></path>
+<text x="576.4" y="106.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >3.02 s</text>
+<text x="576.4" y="122.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 256/256 partitions, merge 1212 ms</text>
+<text x="158.0" y="166.0" font-size="13" fill="#0b0b0b" text-anchor="end" font-weight="500" >partition totals</text>
+<rect x="170.0" y="144.0" width="279.2" height="34.0" rx="0" fill="#c3c2b7"><title>partition totals: local phase 2147 ms</title></rect>
+<rect x="451.2" y="144.0" width="17.8" height="34.0" rx="0" fill="#e1e0d9"><title>sketch + bookkeeping 144 ms</title></rect>
+<path d="M471.0,144.0 h157.0 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-157.0 z" fill="#2a78d6"><title>partition totals: merge phase 1234 ms</title></path>
+<text x="642.0" y="158.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >3.53 s  (0.86x)</text>
+<text x="642.0" y="174.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 256/256 partitions, merge 1234 ms</text>
+<text x="158.0" y="218.0" font-size="13" fill="#0b0b0b" text-anchor="end" font-weight="500" >slots (16)</text>
+<rect x="170.0" y="196.0" width="268.3" height="34.0" rx="0" fill="#c3c2b7"><title>slots (16): local phase 2064 ms</title></rect>
+<rect x="440.3" y="196.0" width="0.1" height="34.0" rx="0" fill="#e1e0d9"><title>sketch + bookkeeping 8 ms</title></rect>
+<path d="M442.4,196.0 h4.8 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-4.8 z" fill="#2a78d6"><title>slots (16): merge phase 68 ms</title></path>
+<text x="461.2" y="210.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >2.14 s  (1.41x)</text>
+<text x="461.2" y="226.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 14/256 partitions, merge 68 ms</text>
+<text x="158.0" y="270.0" font-size="13" fill="#0b0b0b" text-anchor="end" font-weight="500" >slots (16) + filter</text>
+<rect x="170.0" y="248.0" width="266.1" height="34.0" rx="0" fill="#c3c2b7"><title>slots (16) + filter: local phase 2047 ms</title></rect>
+<rect x="438.1" y="248.0" width="0.0" height="34.0" rx="0" fill="#e1e0d9"><title>sketch + bookkeeping 2 ms</title></rect>
+<path d="M439.4,248.0 h5.2 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-5.2 z" fill="#2a78d6"><title>slots (16) + filter: merge phase 70 ms</title></path>
+<text x="458.6" y="262.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >2.12 s  (1.43x)</text>
+<text x="458.6" y="278.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 14/256 partitions, merge 70 ms</text>
+<rect x="24.0" y="328.0" width="12.0" height="12.0" rx="2" fill="#c3c2b7"></rect>
+<text x="42.0" y="338.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >local phase (pre-aggregate + flush)</text>
+<rect x="295.0" y="328.0" width="12.0" height="12.0" rx="2" fill="#2a78d6"></rect>
+<text x="313.0" y="338.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >merge phase</text>
+<rect x="407.6" y="328.0" width="12.0" height="12.0" rx="2" fill="#e1e0d9"></rect>
+<text x="425.6" y="338.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >other</text>
+</svg>

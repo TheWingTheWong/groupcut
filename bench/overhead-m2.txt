@@ -1,0 +1,8 @@
+
+== overhead: uniform keys, 10000000 rows, 1 thread, best of 15 ==
+  full merge             best    895.2 ms  (+0.0% vs full merge)  merged 256/256
+  partition totals       best    958.8 ms  (+7.1% vs full merge)  merged 256/256
+  slots (16)             best    953.8 ms  (+6.6% vs full merge)  merged 256/256
+  slots (16) + filter    best    995.5 ms  (+11.2% vs full merge)  merged 256/256
+
+wrote bench/overhead-m2.json

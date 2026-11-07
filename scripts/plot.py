@@ -27,6 +27,8 @@ AXIS = "#c3c2b7"
 S1, S2, S3 = "#2a78d6", "#eb6834", "#1baf7a"
 FONT = 'system-ui, -apple-system, "Segoe UI", sans-serif'
 
+MACHINE = {"macos": "Apple M2 (macOS)", "linux": "GitHub Actions runner (Linux)"}
+
 STRATEGY_COLOR = {
     "slots (16) + filter": S1,
     "slots (16)": S2,
@@ -82,16 +84,17 @@ def bar_end(svg, x, y, w, h, fill, title):
 
 def wiki_chart(wiki):
     runs = wiki["runs"]
-    W, H = 860, 330
-    left, right, top = 170, 250, 92
+    W, H = 900, 360
+    left, right, top = 170, 270, 92
     row_h, gap = 34, 18
     svg = Svg(W, H)
     hours = wiki["files"]
     svg.text(24, 34, f"Top 10 of {wiki['rows'] / 1e6:.1f}M Wikipedia pageview rows: who skips the merge?", 17, INK, weight=600)
+    machine = MACHINE.get(wiki.get("os"), wiki.get("os", "?"))
     svg.text(
         24, 58,
-        f"SUM(views) GROUP BY page ORDER BY 2 DESC LIMIT {wiki['k']}, {hours} hourly dumps, "
-        f"{wiki['threads']} threads, median of runs. Blue is the merge phase pruning attacks.",
+        f"SUM(views) GROUP BY (wiki, page) ORDER BY 2 DESC LIMIT {wiki['k']}: {hours} hourly dumps, "
+        f"{wiki['threads']} threads, {machine}, median of {wiki.get('reps', 7)} runs.",
         12.5, INK2,
     )
     maxv = max(r["total_ms"] for r in runs)
@@ -120,14 +123,14 @@ def wiki_chart(wiki):
         bar_end(svg, x, y, max(merge * scale, 2), row_h, S1, f"{r['strategy']}: merge phase {merge:.0f} ms")
         x_end = left + r["total_ms"] * scale + 12
         speed = base / r["total_ms"]
-        svg.text(x_end, y + 14, f"{r['total_ms'] / 1000:.2f} s" + ("" if i == 0 else f"   {speed:.2f}x"), 13, INK, weight=600)
+        svg.text(x_end, y + 14, f"{r['total_ms'] / 1000:.2f} s" + ("" if i == 0 else f"  ({speed:.2f}x)"), 13, INK, weight=600)
         svg.text(
             x_end, y + 30,
             f"merged {r['partitions_merged']}/{r['partitions']} partitions, merge {merge:.0f} ms",
             11.5, INK2,
         )
     # legend
-    ly = H - 26
+    ly = H - 22
     lx = 24
     for label, color in [("local phase (pre-aggregate + flush)", "#c3c2b7"), ("merge phase", S1), ("other", "#e1e0d9")]:
         svg.rect(lx, ly - 10, 12, 12, color, 2)
@@ -181,7 +184,7 @@ def line_panel(svg, ox, oy, pw, ph, xs, series, ytitle, ymax, xlabel, xfmt=str, 
         return oy + ph - v / ymax * ph
 
     svg.text(ox, oy - 14, ytitle, 13, INK, weight=600)
-    nt = 5
+    nt = 4 if ymax in (256, 1024, 4096) else 5
     for i in range(nt + 1):
         v = ymax * i / nt
         svg.line(ox, Y(v), ox + pw, Y(v), GRID)
@@ -205,7 +208,7 @@ def skew_chart(res):
     sweep = res["skew"]
     xs = [p["s"] for p in sweep]
     names = [r["strategy"] for r in sweep[0]["runs"]][1:]
-    W, H = 900, 400
+    W, H = 1000, 420
     svg = Svg(W, H)
     svg.text(24, 32, "Speedup over a full merge, by key skew (synthetic, COUNT(*), k = 10)", 16, INK, weight=600)
     svg.text(
@@ -227,20 +230,21 @@ def skew_chart(res):
             series.append((name, STRATEGY_COLOR[name], ys))
         ymax = max(max(s[2]) for s in series)
         ymax = math.ceil(ymax / (5 if ymax > 10 else 0.5)) * (5 if ymax > 10 else 0.5)
-        ox = 70 + pi * (pw + 110)
+        ox = 70 + pi * (pw + 230)
         X, Y = line_panel(svg, ox, 100, pw, ph, xs, series, f"{title} speedup (x)", ymax, "Zipf exponent s")
         svg.line(ox, Y(1), ox + pw, Y(1), AXIS, 1.5)
-        # Direct labels at the right end, nudged apart.
-        ends = sorted(((s[2][-1], s[0], s[1]) for s in series), reverse=True)
-        last_y = -1e9
-        for v, name, color in ends:
-            y = max(Y(v) + 4, last_y + 14) if last_y > -1e9 else Y(v) + 4
-            svg.text(ox + pw + 8, y, f"{v:.1f}x", 11.5, INK, weight=600)
-            last_y = y
+        if pi == 0:
+            # Direct labels at the peak of each series, nudged apart.
+            ends = sorted(((max(s[2]), s[0]) for s in series), reverse=True)
+            last = None
+            for v, name in ends:
+                y = Y(v) - 8 if last is None else max(Y(v) - 8, last + 14)
+                svg.text(ox + pw + 8, y, f"{name}: up to {v:.0f}x", 11.5, INK, weight=500)
+                last = y
     lx = 70
     for name in names:
-        svg.rect(lx, H - 34, 12, 12, STRATEGY_COLOR[name], 2)
-        svg.text(lx + 18, H - 24, name, 12, INK2)
+        svg.rect(lx, H - 30, 12, 12, STRATEGY_COLOR[name], 2)
+        svg.text(lx + 18, H - 20, name, 12, INK2)
         lx += 18 + len(name) * 6.8 + 26
     svg.save(ASSETS / "skew.svg")
 
@@ -260,14 +264,14 @@ def slots_chart(res):
             n = int(lab.split("(")[1].split(")")[0])
         pts.setdefault(filt, {})[n] = r
     xs = sorted(pts[False])
-    W, H = 900, 400
+    W, H = 900, 420
     svg = Svg(W, H)
     svg.text(24, 32, f"More slots per partition, tighter bounds (synthetic, Zipf s = {res.get('slots_s', 1.0)})", 16, INK, weight=600)
     svg.text(24, 54, "1 slot = the partition total. Left: partitions that still had to be merged. Right: share of partials never inserted.", 12.5, INK2)
     pw, ph = 330, 230
     total = base["partitions"]
     s_merged = [("slots", S2, [pts[False][x]["partitions_merged"] for x in xs]), ("slots + filter", S1, [pts[True][x]["partitions_merged"] for x in xs])]
-    ymax = math.ceil(max(max(s[2]) for s in s_merged) / 10) * 10
+    ymax = total
     line_panel(svg, 70, 100, pw, ph, xs, s_merged, f"partitions merged (of {total})", ymax, "slots per partition", str, True)
     s_skip = [
         ("slots", S2, [100 * (1 - pts[False][x]["entries_merged"] / pts[False][x]["local_entries"]) for x in xs]),
@@ -276,11 +280,11 @@ def slots_chart(res):
     lo = math.floor(min(min(s[2]) for s in s_skip) / 5) * 5
     # Re-base the right panel at `lo` so the differences are visible; say so.
     shifted = [(n, c, [v - lo for v in ys]) for n, c, ys in s_skip]
-    X, Y = line_panel(svg, 510, 100, pw, ph, xs, shifted, f"partials skipped (%, axis starts at {lo})", 100 - lo, "slots per partition", str, True, lo)
+    X, Y = line_panel(svg, 510, 100, pw, ph, xs, shifted, (f"partials skipped (%, axis starts at {lo})" if lo else "partials skipped (%)"), 100 - lo, "slots per partition", str, True, lo)
     lx = 70
     for name, color in [("slots", S2), ("slots + filter", S1)]:
-        svg.rect(lx, H - 34, 12, 12, color, 2)
-        svg.text(lx + 18, H - 24, name, 12, INK2)
+        svg.rect(lx, H - 30, 12, 12, color, 2)
+        svg.text(lx + 18, H - 20, name, 12, INK2)
         lx += 18 + len(name) * 6.8 + 26
     svg.save(ASSETS / "slots.svg")
 

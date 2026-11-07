@@ -1,5 +1,5 @@
 # Reproduce the README numbers on a GitHub-hosted runner. Manual trigger only:
-# it downloads ~300 MB of Wikipedia pageview dumps and runs for ~5 minutes.
+# it downloads ~300 MB of Wikipedia pageview dumps and runs for ~10 minutes.
 name: bench
 
 on:
@@ -14,17 +14,24 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: cargo build --release
       - run: scripts/fetch-wiki.sh 20261101 12 6
-      - name: Wikipedia pageviews, 6 hours
+      - name: Wikipedia pageviews, 6 hours, 256 partitions, checked against the reference
+        run: ./target/release/groupcut wiki --reps 7 --check --json bench/wiki-gha.json data/*.gz | tee bench/wiki-gha.txt
+      - name: Same, 1024 and 4096 partitions
         run: |
-          ./target/release/groupcut wiki --reps 7 --json bench/wiki-gha.json data/*.gz | tee bench/wiki-gha.txt
+          ./target/release/groupcut wiki --reps 7 --partition-bits 10 --json bench/wiki-gha-p10.json data/*.gz | tee bench/wiki-gha-p10.txt
+          ./target/release/groupcut wiki --reps 7 --partition-bits 12 --json bench/wiki-gha-p12.json data/*.gz | tee bench/wiki-gha-p12.txt
+      - name: DuckDB on the same query, for scale
+        run: |
+          python3 -m pip install --quiet duckdb
+          python3 scripts/duckdb_compare.py --threads "$(nproc)" data/*.gz | tee bench/duckdb-gha.txt
+      - name: Demo
+        run: ./target/release/groupcut demo | tee bench/demo-gha.txt
       - name: Synthetic sweeps
-        run: |
-          ./target/release/groupcut bench --reps 5 --out bench/results-gha.json | tee bench/results-gha.txt
+        run: ./target/release/groupcut bench --reps 5 --out bench/results-gha.json | tee bench/results-gha.txt
       - name: Summary
         run: |
-          { echo '## Wikipedia'; echo '```'; cat bench/wiki-gha.txt; echo '```';
-            echo '## Synthetic'; echo '```'; cat bench/results-gha.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          for f in bench/*-gha*.txt; do echo "## $f"; echo '```'; cat "$f"; echo '```'; done >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v5
         with:
           name: bench-results
-          path: bench/*-gha.*
+          path: bench/*-gha*

@@ -10,16 +10,17 @@ const USAGE: &str = "\
 groupcut: exact top-k GROUP BY with sketch-based partition pruning
 
 USAGE:
-  groupcut demo  [--rows N] [--groups N] [--skew S] [--k K] [--threads T]
+  groupcut demo  [--rows N] [--groups N] [--skew S] [--k K] [--threads T] [--reps R]
   groupcut bench [--rows N] [--groups N] [--reps R] [--threads T] [--out FILE]
                  [--sections skew,slots,k,partitions,overhead]
   groupcut wiki  [--by page|title] [--agg sum|count|max] [--k K] [--reps R]
-                 [--json FILE] FILES...
+                 [--partition-bits B] [--check] [--json FILE] FILES...
 
 demo   one synthetic Zipf workload, every strategy, checked against a
        naive HashMap + sort reference
 bench  the sweeps behind the README charts (skew, slots, k, partitions)
-wiki   Wikimedia hourly pageview dumps (.gz or plain), see scripts/fetch-wiki.sh
+wiki   Wikimedia hourly pageview dumps (.gz or plain), see scripts/fetch-wiki.sh;
+       --check also runs the HashMap + sort reference on the full data
 ";
 
 struct Args {
@@ -33,7 +34,11 @@ impl Args {
         let mut rest = Vec::new();
         let mut i = 0;
         while i < argv.len() {
-            if let Some(name) = argv[i].strip_prefix("--") {
+            if argv[i] == "--check" {
+                // The one boolean flag.
+                rest.push(argv[i].clone());
+                i += 1;
+            } else if let Some(name) = argv[i].strip_prefix("--") {
                 let v = argv
                     .get(i + 1)
                     .cloned()
@@ -238,7 +243,9 @@ fn configs(threads: usize, partition_bits: u32, strategies: &[Strategy]) -> Vec<
 fn demo(a: &Args) {
     let rows: usize = a.get("rows", 20_000_000);
     let groups: usize = a.get("groups", 4_000_000);
-    let skew: f64 = a.get("skew", 1.0);
+    // s = 0.8 by default: skewed enough to prune, but partition totals alone
+    // prune nothing, which is the case slot counters exist for.
+    let skew: f64 = a.get("skew", 0.8);
     let k: usize = a.get("k", 10);
     let threads: usize = a.get("threads", default_threads());
     let reps: usize = a.get("reps", 5);
@@ -506,18 +513,26 @@ fn wiki_cmd(a: &Args) {
     let k: usize = a.get("k", 10);
     let reps: usize = a.get("reps", 5);
     let threads: usize = a.get("threads", default_threads());
-    let paths: Vec<PathBuf> = a.rest.iter().map(PathBuf::from).collect();
+    let partition_bits: u32 = a.get("partition-bits", 8);
+    let check = a.rest.iter().any(|r| r == "--check");
+    let paths: Vec<PathBuf> = a
+        .rest
+        .iter()
+        .filter(|r| *r != "--check")
+        .map(PathBuf::from)
+        .collect();
     if paths.is_empty() {
         die("wiki needs at least one pageviews file (run scripts/fetch-wiki.sh)");
     }
 
     let t = Instant::now();
     let (keys, vals) = wiki::load(&paths, by).unwrap_or_else(|e| die(&e.to_string()));
+    let load_ms = ms(t.elapsed());
     println!(
-        "loaded {} rows from {} file(s) in {:.1} s",
+        "loaded {} rows from {} file(s) in {:.1} s (gunzip + parse + hash; not part of the query times below)",
         keys.len(),
         paths.len(),
-        t.elapsed().as_secs_f64()
+        load_ms / 1e3
     );
     let (col, what) = match by {
         GroupBy::Page => ("domain_code, page_title", "page"),
@@ -535,10 +550,21 @@ fn wiki_cmd(a: &Args) {
         &vals,
         agg,
         k,
-        &configs(threads, 8, &STRATEGIES),
+        &configs(threads, partition_bits, &STRATEGIES),
         reps,
     );
     check_same(&m, &m[0].result.clone());
+    let checked = if check {
+        let t = Instant::now();
+        let expect = reference::top_k(&keys, &vals, agg, k);
+        check_same(&m, &expect);
+        format!(
+            "; all match the HashMap + sort reference ({:.0} ms)",
+            ms(t.elapsed())
+        )
+    } else {
+        String::new()
+    };
 
     let wanted: Vec<u64> = m[0].result.iter().map(|r| r.0).collect();
     let names = wiki::names(&paths, by, &wanted).unwrap_or_else(|e| die(&e.to_string()));
@@ -557,13 +583,13 @@ fn wiki_cmd(a: &Args) {
     print_table(&m);
     let full = &m[0].stats;
     println!(
-        "  {} distinct {what}s, {} partial aggregates across {} partitions; answers identical across strategies",
+        "  {} distinct {what}s, {} partial aggregates across {} partitions; answers identical across strategies{checked}",
         full.groups_merged, full.local_entries, full.partitions
     );
 
     if let Some((_, path)) = a.flags.iter().find(|(n, _)| n == "json") {
         let mut j = String::new();
-        let _ = write!(j, "{{\"os\":\"{}\",\"arch\":\"{}\",\"rows\":{},\"files\":{},\"by\":\"{what}\",\"agg\":\"{}\",\"k\":{k},\"threads\":{threads},\"reps\":{reps},\"runs\":{}", std::env::consts::OS, std::env::consts::ARCH, keys.len(), paths.len(), agg.name(), json_list(&m));
+        let _ = write!(j, "{{\"os\":\"{}\",\"arch\":\"{}\",\"rows\":{},\"files\":{},\"by\":\"{what}\",\"agg\":\"{}\",\"k\":{k},\"threads\":{threads},\"reps\":{reps},\"load_ms\":{load_ms:.0},\"runs\":{}", std::env::consts::OS, std::env::consts::ARCH, keys.len(), paths.len(), agg.name(), json_list(&m));
         // Per-partition detail of every strategy's last run, for the partition map:
         // [bound, partials, merged, filtered].
         j.push_str(",\"detail\":[");

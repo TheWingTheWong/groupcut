@@ -37,12 +37,14 @@ impl AggKind {
 
 /// Monomorphized aggregate operations on `i64` states.
 ///
-/// SUM panics on `i64` overflow, as PostgreSQL errors on `bigint out of
-/// range`. Wrapping would make results wrong in general, and would also make
-/// pruning unsound: a wrapped partial no longer bounds anything. (DuckDB
-/// widens SUM(BIGINT) to a 128-bit HUGEINT instead; that is the production
-/// answer, at twice the state size.) Bounds saturate, so they can only
-/// overshoot.
+/// SUM panics on `i64` overflow, as SQL Server raises an arithmetic overflow
+/// for SUM over BIGINT. Wrapping would make results wrong in general, and
+/// would also make pruning unsound: a wrapped partial no longer bounds
+/// anything. PostgreSQL (NUMERIC) and DuckDB (128-bit HUGEINT) widen the
+/// result type instead, which is the better answer at twice the state size.
+/// Because partials are combined in a thread-dependent order, a SUM whose
+/// final value fits in `i64` can still overflow in an intermediate partial.
+/// Bounds saturate, so they can only overshoot.
 pub trait AggOp: Send + Sync + 'static {
     const KIND: AggKind;
     /// Identity for `bound_combine`.

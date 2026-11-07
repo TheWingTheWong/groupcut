@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Render the README charts as SVG from benchmark JSON. Standard library only.
 
+    python3 scripts/plot.py                       # GitHub runner results (default)
     python3 scripts/plot.py bench/wiki-m2.json bench/results-m2.json
 
 Writes assets/wiki.svg, assets/partition-map.svg, assets/skew.svg and
@@ -15,9 +16,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / "assets"
 
-# Reference palette (validated: categorical slots 1-3 pass CVD and
-# normal-vision separation on the light surface; aqua needs direct labels,
-# which every chart here has).
+# Colors: three categorical hues checked for color-vision-deficiency
+# separation on this light background, plus neutral grays for chrome.
 SURFACE = "#fcfcfb"
 INK = "#0b0b0b"
 INK2 = "#52514e"
@@ -283,7 +283,7 @@ def slots_chart(res):
 
 def main():
     ASSETS.mkdir(exist_ok=True)
-    args = sys.argv[1:] or ["bench/wiki-m2.json", "bench/results-m2.json"]
+    args = sys.argv[1:] or ["bench/wiki-gha.json", "bench/results-gha.json"]
     for a in args:
         d = json.loads((ROOT / a).read_text() if not Path(a).is_absolute() else Path(a).read_text())
         if "detail" in d:

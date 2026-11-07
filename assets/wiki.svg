@@ -16,25 +16,25 @@
 <text x="595.8" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >500 ms</text>
 <text x="158.0" y="114.0" font-size="13" fill="#0b0b0b" text-anchor="end" font-weight="500" >full merge</text>
 <rect x="170.0" y="92.0" width="224.1" height="34.0" rx="0" fill="#c3c2b7"><title>full merge: local phase 264 ms</title></rect>
-<rect x="396.1" y="92.0" width="22.4" height="34.0" rx="0" fill="#e1e0d9"><title>sketch + bookkeeping 27 ms</title></rect>
+<rect x="396.1" y="92.0" width="22.4" height="34.0" rx="0" fill="#e1e0d9"><title>rest of the total: 27 ms (sketch combine, freeing buffers; each column is its own median)</title></rect>
 <path d="M420.5,92.0 h180.7 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-180.7 z" fill="#2a78d6"><title>full merge: merge phase 217 ms</title></path>
 <text x="615.2" y="106.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >0.51 s</text>
 <text x="615.2" y="122.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 256/256 partitions, merge 217 ms</text>
 <text x="158.0" y="166.0" font-size="13" fill="#0b0b0b" text-anchor="end" font-weight="500" >partition totals</text>
 <rect x="170.0" y="144.0" width="252.9" height="34.0" rx="0" fill="#c3c2b7"><title>partition totals: local phase 298 ms</title></rect>
-<rect x="424.9" y="144.0" width="22.5" height="34.0" rx="0" fill="#e1e0d9"><title>sketch + bookkeeping 28 ms</title></rect>
+<rect x="424.9" y="144.0" width="22.5" height="34.0" rx="0" fill="#e1e0d9"><title>rest of the total: 28 ms (sketch combine, freeing buffers; each column is its own median)</title></rect>
 <path d="M449.4,144.0 h178.6 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-178.6 z" fill="#2a78d6"><title>partition totals: merge phase 214 ms</title></path>
 <text x="642.0" y="158.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >0.54 s  (0.94x)</text>
 <text x="642.0" y="174.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 256/256 partitions, merge 214 ms</text>
 <text x="158.0" y="218.0" font-size="13" fill="#0b0b0b" text-anchor="end" font-weight="500" >slots (16)</text>
 <rect x="170.0" y="196.0" width="248.4" height="34.0" rx="0" fill="#c3c2b7"><title>slots (16): local phase 293 ms</title></rect>
-<rect x="420.4" y="196.0" width="26.3" height="34.0" rx="0" fill="#e1e0d9"><title>sketch + bookkeeping 32 ms</title></rect>
+<rect x="420.4" y="196.0" width="26.3" height="34.0" rx="0" fill="#e1e0d9"><title>rest of the total: 32 ms (sketch combine, freeing buffers; each column is its own median)</title></rect>
 <path d="M448.7,196.0 h18.8 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-18.8 z" fill="#2a78d6"><title>slots (16): merge phase 27 ms</title></path>
 <text x="481.5" y="210.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >0.35 s  (1.45x)</text>
 <text x="481.5" y="226.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 14/256 partitions, merge 27 ms</text>
 <text x="158.0" y="270.0" font-size="13" fill="#0b0b0b" text-anchor="end" font-weight="500" >slots (16) + filter</text>
 <rect x="170.0" y="248.0" width="247.8" height="34.0" rx="0" fill="#c3c2b7"><title>slots (16) + filter: local phase 292 ms</title></rect>
-<rect x="419.8" y="248.0" width="30.0" height="34.0" rx="0" fill="#e1e0d9"><title>sketch + bookkeeping 36 ms</title></rect>
+<rect x="419.8" y="248.0" width="30.0" height="34.0" rx="0" fill="#e1e0d9"><title>rest of the total: 36 ms (sketch combine, freeing buffers; each column is its own median)</title></rect>
 <path d="M451.8,248.0 h17.2 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-17.2 z" fill="#2a78d6"><title>slots (16) + filter: merge phase 25 ms</title></path>
 <text x="483.0" y="262.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >0.35 s  (1.44x)</text>
 <text x="483.0" y="278.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 14/256 partitions, merge 25 ms</text>
@@ -43,5 +43,5 @@
 <rect x="295.0" y="328.0" width="12.0" height="12.0" rx="2" fill="#2a78d6"></rect>
 <text x="313.0" y="338.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >merge phase</text>
 <rect x="407.6" y="328.0" width="12.0" height="12.0" rx="2" fill="#e1e0d9"></rect>
-<text x="425.6" y="338.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >other</text>
+<text x="425.6" y="338.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >rest of total</text>
 </svg>

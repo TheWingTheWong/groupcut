@@ -76,6 +76,8 @@ fn every_configuration_matches_the_reference() {
                     threads: 1 + rng.below(8) as usize,
                     partition_bits: rng.below(9) as u32,
                     preagg_bits: 4 + rng.below(10) as u32,
+                    // 64..4096 rows, so phase 1 really runs on several threads.
+                    morsel_rows: 64 << rng.below(7),
                     strategy: random_strategy(&mut rng),
                 };
                 let (got, stats) = top_k(&keys, &vals, agg, k, &cfg);
@@ -129,6 +131,7 @@ fn ties_are_broken_by_key_and_never_pruned_away() {
                 threads: 4,
                 partition_bits: 6,
                 preagg_bits: 8,
+                morsel_rows: 256,
                 strategy: Strategy::Prune { slot_bits, filter },
             };
             let (got, _) = top_k(&keys, &vals, AggKind::Count, 25, &cfg);
@@ -194,6 +197,7 @@ fn negative_sums_do_not_break_the_bound() {
                     threads: 1,
                     partition_bits: 1,
                     preagg_bits,
+                    morsel_rows: 256,
                     strategy: Strategy::Prune { slot_bits, filter },
                 };
                 assert_eq!(
@@ -221,6 +225,7 @@ fn partitions_whose_bound_equals_the_threshold_are_merged() {
                 threads: 1,
                 partition_bits: 8,
                 preagg_bits: 8,
+                morsel_rows: 256,
                 strategy: Strategy::Prune { slot_bits, filter },
             };
             assert_eq!(top_k(&keys, &vals, AggKind::Count, 25, &cfg).0, expect);
@@ -239,6 +244,7 @@ fn sum_overflow_is_an_error_not_a_wrong_answer() {
         threads: 1,
         partition_bits: 2,
         preagg_bits: 4,
+        morsel_rows: 256,
         strategy: Strategy::Prune {
             slot_bits: 2,
             filter: true,
@@ -258,6 +264,7 @@ fn skewed_data_actually_prunes() {
         threads: 4,
         partition_bits: 8,
         preagg_bits: 12,
+        morsel_rows: 256,
         strategy: Strategy::Prune {
             slot_bits: 4,
             filter: true,
@@ -283,6 +290,7 @@ fn uniform_data_prunes_nothing_but_stays_exact() {
         threads: 4,
         partition_bits: 8,
         preagg_bits: 10,
+        morsel_rows: 256,
         strategy: Strategy::Prune {
             slot_bits: 4,
             filter: true,
@@ -309,6 +317,7 @@ fn results_do_not_depend_on_thread_count() {
                 threads,
                 partition_bits: 5,
                 preagg_bits: 9,
+                morsel_rows: 256,
                 strategy: Strategy::Prune {
                     slot_bits: 3,
                     filter: true,

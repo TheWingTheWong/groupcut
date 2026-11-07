@@ -235,6 +235,7 @@ fn configs(threads: usize, partition_bits: u32, strategies: &[Strategy]) -> Vec<
             threads,
             partition_bits,
             preagg_bits: 14,
+            morsel_rows: 1 << 16,
             strategy,
         })
         .collect()

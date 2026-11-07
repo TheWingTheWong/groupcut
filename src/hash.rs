@@ -80,7 +80,7 @@ pub fn hash_bytes(parts: &[&[u8]]) -> u64 {
     let mut h: u64 = 0xcbf2_9ce4_8422_2325;
     for (i, p) in parts.iter().enumerate() {
         if i > 0 {
-            h ^= 0xff; // separator that cannot appear in UTF-8 text
+            h ^= 0xff; // separator; 0xff never occurs in valid UTF-8
             h = h.wrapping_mul(0x0000_0100_0000_01b3);
         }
         for &b in *p {

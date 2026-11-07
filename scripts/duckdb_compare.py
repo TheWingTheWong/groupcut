@@ -10,7 +10,8 @@ median of 7 after one warm-up:
   hashed keys  GROUP BY hash(domain_code, page_title) as one BIGINT column,
                which is the input groupcut sees
 
-and checks that DuckDB's top 10 matches groupcut's (bench/wiki-*.txt).
+and prints DuckDB's top 10 for comparison with groupcut's (bench/wiki-*.txt);
+it does not compare them automatically.
 """
 
 import argparse

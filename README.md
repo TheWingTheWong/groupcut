@@ -43,7 +43,7 @@ What the numbers are, and are not:
 ## Quickstart
 
 ```sh
-cargo test --release                       # unit + randomized differential tests (~30 s)
+cargo test --release                       # unit + randomized differential tests (~2 min cold build, then seconds)
 cargo run --release -- demo                # 20M synthetic rows, every strategy, checked against a reference
 
 scripts/fetch-wiki.sh                      # 6 hourly pageview dumps, ~300 MB, CC0
@@ -81,9 +81,13 @@ SELECT domain_code, page_title, SUM(count_views) FROM pageviews GROUP BY domain_
 ```
 
 `skipped` is the share of phase-1 output that was never inserted into a merge
-table. Times are medians of 7 runs. Phase 1 (`local`) is about 11% slower with
-a sketch: on this data every row becomes a partial, and each partial costs
-one extra counter update. That costs ~28 ms and saves ~190 ms in the merge.
+table. Times are medians of 7 runs within one job. Between two runner jobs on
+the same code the absolute times moved by ~25% (an earlier run: 681 ms full
+merge, 442 ms pruned) while the ratio stayed at 1.45-1.54x, so read the
+ratios and partition counts rather than the third digit. Phase 1 (`local`)
+is 10-13% slower in all three pruning runs. Some of that is the extra counter
+update per partial (on this data every row is a partial), but it does not
+order cleanly by sketch size, so part of it is noise. The merge saves ~190 ms.
 
 At other partition counts (`bench/wiki-gha-p10.txt`, `bench/wiki-gha-p12.txt`):
 
@@ -91,7 +95,7 @@ At other partition counts (`bench/wiki-gha-p10.txt`, `bench/wiki-gha-p12.txt`):
 |---|---|---|---|
 | 256 | 509 ms (local 264, merge 217) | 540 ms, merged 256/256 | **353 ms**, merged 14/256 |
 | 1024 | 522 ms (local 309, merge 159) | 558 ms, merged 1024/1024 | 411 ms, merged 12/1024 |
-| 4096 | 544 ms (local 342, merge 150) | 441 ms, merged 16/4096 | 449 ms, merged 13/4096 |
+| 4096 | 544 ms (local 342, merge 150) | 441 ms, merged 16/4096 | 449 ms, merged 13/4096 (a tie, within noise) |
 
 More partitions make each partition total smaller, so at 4096 the totals
 finally drop below τ. But every row is now scattered into 16 times as many
@@ -289,7 +293,8 @@ on τ for COUNT, MAX, and SUM over non-negative values. It isn't implemented.
 
 - **Differential test:** 400 random workloads × 3 aggregates × 3 random
   configurations (threads 1-8, 1-256 partitions, 1-64 slots, filter on/off,
-  pre-aggregation tables of 16 to 8K buckets), 3,600 runs in all. Every answer
+  pre-aggregation tables of 16 to 8K buckets, morsels of 64 to 4K rows so
+  phase 1 really is spread over threads), 3,600 runs in all. Every answer
   must equal a `HashMap` + sort reference exactly, including tie order. The
   workloads include empty input, k = 0, k larger than the number of groups,
   all-negative values, values near ±2^40, and the keys `0` and `u64::MAX`.

@@ -118,7 +118,7 @@ def wiki_chart(wiki):
         svg.rect(x, y, local * scale - 1, row_h, "#c3c2b7", 0, f"{r['strategy']}: local phase {local:.0f} ms")
         x += local * scale + 1
         if other > 0:
-            svg.rect(x, y, max(other * scale - 1, 0), row_h, "#e1e0d9", 0, f"sketch + bookkeeping {other:.0f} ms")
+            svg.rect(x, y, max(other * scale - 1, 0), row_h, "#e1e0d9", 0, f"rest of the total: {other:.0f} ms (sketch combine, freeing buffers; each column is its own median)")
             x += other * scale + 1
         bar_end(svg, x, y, max(merge * scale, 2), row_h, S1, f"{r['strategy']}: merge phase {merge:.0f} ms")
         x_end = left + r["total_ms"] * scale + 12
@@ -132,7 +132,7 @@ def wiki_chart(wiki):
     # legend
     ly = H - 22
     lx = 24
-    for label, color in [("local phase (pre-aggregate + flush)", "#c3c2b7"), ("merge phase", S1), ("other", "#e1e0d9")]:
+    for label, color in [("local phase (pre-aggregate + flush)", "#c3c2b7"), ("merge phase", S1), ("rest of total", "#e1e0d9")]:
         svg.rect(lx, ly - 10, 12, 12, color, 2)
         svg.text(lx + 18, ly, label, 12, INK2)
         lx += 18 + len(label) * 6.6 + 22

@@ -85,6 +85,9 @@ pub struct Config {
     pub partition_bits: u32,
     /// log2 of the pre-aggregation table's bucket count (flushed at 5/8 load).
     pub preagg_bits: u32,
+    /// Rows per morsel in phase 1 (64K by default; tests use small morsels so
+    /// that small inputs are still spread over several threads).
+    pub morsel_rows: usize,
     pub strategy: Strategy,
 }
 
@@ -96,6 +99,7 @@ impl Default for Config {
                 .unwrap_or(4),
             partition_bits: 8,
             preagg_bits: 14,
+            morsel_rows: 1 << 16,
             strategy: Strategy::Prune {
                 slot_bits: 4,
                 filter: true,
@@ -194,7 +198,7 @@ fn run<A: AggOp>(keys: &[u64], vals: &[i64], k: usize, cfg: &Config) -> (Vec<(u6
     // Morsel-driven: threads pull fixed-size row ranges from a shared cursor,
     // so a slow core (efficiency cores, a preempted thread) takes fewer
     // morsels instead of holding up the phase.
-    const MORSEL: usize = 1 << 16;
+    let morsel = cfg.morsel_rows.max(1);
     let cursor = AtomicUsize::new(0);
     let preagg_cap = 1usize << cfg.preagg_bits.clamp(4, 24);
     let locals: Vec<Local> = std::thread::scope(|s| {
@@ -212,11 +216,11 @@ fn run<A: AggOp>(keys: &[u64], vals: &[i64], k: usize, cfg: &Config) -> (Vec<(u6
                     };
                     let mut table = AggTable::fixed(preagg_cap);
                     loop {
-                        let lo = cursor.fetch_add(MORSEL, Relaxed);
+                        let lo = cursor.fetch_add(morsel, Relaxed);
                         if lo >= keys.len() {
                             break;
                         }
-                        let hi = (lo + MORSEL).min(keys.len());
+                        let hi = (lo + morsel).min(keys.len());
                         for (&key, &v) in keys[lo..hi].iter().zip(&vals[lo..hi]) {
                             table.upsert(key, mix(key), A::init(v), |a| A::update(a, v));
                             if table.is_full() {

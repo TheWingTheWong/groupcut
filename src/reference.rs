@@ -12,7 +12,7 @@ pub fn top_k(keys: &[u64], vals: &[i64], agg: AggKind, k: usize) -> Vec<(u64, i6
             }
             Some(a) => match agg {
                 AggKind::Count => *a += 1,
-                AggKind::Sum => *a = a.wrapping_add(v),
+                AggKind::Sum => *a = crate::agg::sum_add(*a, v),
                 AggKind::Max => *a = (*a).max(v),
             },
         }

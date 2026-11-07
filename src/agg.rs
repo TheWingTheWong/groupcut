@@ -35,8 +35,14 @@ impl AggKind {
     }
 }
 
-/// Monomorphized aggregate operations. Values are `i64`; sums wrap on
-/// overflow, bounds saturate (so a bound can never wrap below a real value).
+/// Monomorphized aggregate operations on `i64` states.
+///
+/// SUM panics on `i64` overflow, as PostgreSQL errors on `bigint out of
+/// range`. Wrapping would make results wrong in general, and would also make
+/// pruning unsound: a wrapped partial no longer bounds anything. (DuckDB
+/// widens SUM(BIGINT) to a 128-bit HUGEINT instead; that is the production
+/// answer, at twice the state size.) Bounds saturate, so they can only
+/// overshoot.
 pub trait AggOp: Send + Sync + 'static {
     const KIND: AggKind;
     /// Identity for `bound_combine`.
@@ -46,6 +52,21 @@ pub trait AggOp: Send + Sync + 'static {
     fn merge(acc: &mut i64, partial: i64);
     fn bound_contrib(partial: i64) -> i64;
     fn bound_combine(acc: &mut i64, contrib: i64);
+}
+
+/// Checked SUM addition; see `AggOp`.
+#[inline(always)]
+pub fn sum_add(a: i64, b: i64) -> i64 {
+    match a.checked_add(b) {
+        Some(s) => s,
+        None => overflow(),
+    }
+}
+
+#[cold]
+#[inline(never)]
+fn overflow() -> ! {
+    panic!("SUM overflowed i64")
 }
 
 pub struct Count;
@@ -86,11 +107,11 @@ impl AggOp for Sum {
     }
     #[inline(always)]
     fn update(acc: &mut i64, v: i64) {
-        *acc = acc.wrapping_add(v);
+        *acc = sum_add(*acc, v);
     }
     #[inline(always)]
     fn merge(acc: &mut i64, partial: i64) {
-        *acc = acc.wrapping_add(partial);
+        *acc = sum_add(*acc, partial);
     }
     #[inline(always)]
     fn bound_contrib(partial: i64) -> i64 {

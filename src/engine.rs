@@ -229,7 +229,10 @@ fn run<A: AggOp>(keys: &[u64], vals: &[i64], k: usize, cfg: &Config) -> (Vec<(u6
                 })
             })
             .collect();
-        handles.into_iter().map(|h| h.join().unwrap()).collect()
+        handles
+            .into_iter()
+            .map(|h| h.join().unwrap_or_else(|e| std::panic::resume_unwind(e)))
+            .collect()
     });
     stats.local = t.elapsed();
 
@@ -355,7 +358,10 @@ fn run<A: AggOp>(keys: &[u64], vals: &[i64], k: usize, cfg: &Config) -> (Vec<(u6
                 })
             })
             .collect();
-        handles.into_iter().map(|h| h.join().unwrap()).collect()
+        handles
+            .into_iter()
+            .map(|h| h.join().unwrap_or_else(|e| std::panic::resume_unwind(e)))
+            .collect()
     });
     stats.merge = t.elapsed();
     drop(locals);

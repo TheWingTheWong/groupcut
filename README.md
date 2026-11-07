@@ -8,17 +8,21 @@ parallel hash-aggregation engine in Rust (no dependencies). It keeps a small
 sketch of upper bounds per hash partition and skips the partitions that
 cannot contain one of the top k. Answers are exact.
 
-**The finding:** for COUNT and SUM, the sketch prunes once its number of
-counters (partitions × slots) exceeds **Σ_tail/τ**. Here Σ_tail is the total of
-the aggregate minus the top k's share, and τ is the k-th best value. Below
-that ratio it prunes almost nothing. Across 45 distinct configurations on four
-datasets (three of them measured on three CI runners, the dominant-key one
-locally):
+**The finding:** for COUNT (and SUM over non-negative values), the sketch
+cannot prune until its number of counters (partitions × slots) exceeds
+**Σ_tail/τ**. Here Σ_tail is the total of the aggregate minus the top k's
+share, and τ is the k-th best value. This condition is necessary, not
+sufficient. On the four workloads measured here, where the tail is many groups
+far below τ, it also predicted when pruning starts. Over 45 distinct
+configurations (three datasets measured on CI runner 1, plus a dominant-key
+workload measured locally):
 
 - every configuration below a ratio of 1 skipped at most 0.35% of the merge;
 - one at 1.02 skipped 1.5%;
 - every one at 1.5 or above skipped at least 81%, except a 16-partition setup
   where the 10 winners occupy most partitions (31%).
+
+Inputs built to defeat it do so. See *Where the rule breaks* below.
 
 ![Partials skipped vs counters relative to Σ_tail/τ](assets/sizing.svg)
 
@@ -39,14 +43,17 @@ The two real datasets fall on opposite sides of it at the default setting:
 Every answer is checked against a naive `HashMap` + sort reference. The
 Wikipedia top 10 is also identical to DuckDB's.
 
-## Why the rule holds
+## Why the condition is necessary, and when it is enough
 
 A slot can be skipped only if its counter is below τ. The k winners' slots are
-merged anyway, so what has to be spread thin is everything else, Σ_tail. Hashed
-evenly over P·S counters, a typical counter is Σ_tail/(P·S), and it falls below
-τ once P·S > Σ_tail/τ. The ratio is large when the k-th value is small
-compared with the rest: little skew, many groups, or a large k. At k = 1000
-nothing prunes on any dataset here.
+merged anyway, so what has to be spread thin is everything else, Σ_tail.
+Spread over P·S counters, the *average* counter is Σ_tail/(P·S). If that
+average is above τ, most counters are too, and nothing prunes. Below it, a
+partition still needs its *largest* counter under τ. That holds when the tail
+is many groups far below τ, as in Zipf data, the pageviews and Q16, and fails
+when the tail is made of groups close to τ (below). The ratio is large when
+the k-th value is small compared with the rest: little skew, many groups, or a
+large k. At k = 1000 nothing prunes on any dataset here.
 
 An earlier version of this README used the full total Σ instead of Σ_tail. A
 reviewer broke it with one key holding 10M of 10.2M rows. Σ/τ is then ~102,000,
@@ -57,6 +64,30 @@ predicts what happens: 1,024 counters prune nothing, 2,048 prune 1.5%, and
 10 hold under 2% of the mass, so both versions agree there. They differ most
 on strongly skewed synthetic data (s ≥ 1.2), where every configuration is far
 above the threshold either way.
+
+**Where the rule breaks.** A reviewer built two inputs that defeat it.
+
+- **A tail of groups just below τ.** 10 groups of 100 rows plus 20,000 groups
+  of 99 rows (Σ_tail/τ = 19,800). A slot holding even two tail groups is
+  already above τ, so pruning needs the *largest* counter below τ, not the
+  typical one:
+
+  | counters | ratio | skipped |
+  |---|---|---|
+  | 256 × 256 | 3.3 | 0% |
+  | 4096 × 16 | 3.3 | 41% |
+  | 4096 × 64 | 13 | 77% |
+
+  The two 65,536-counter setups also stop being interchangeable, because more
+  slots per partition gives each partition more chances of one hot slot.
+- **SUM with signed values.** Groups whose rows net to zero still add their
+  positive partials to the counters. The relevant mass is the sum of
+  `max(partial, 0)`, which depends on how flushes split the rows, not the
+  final tail.
+
+So the ratio tells you when pruning is impossible. Whether it actually
+happens depends on the largest counter, which is a property of the tail's
+distribution that the ratio doesn't capture.
 
 The rule says nothing about MAX. Its counters hold a maximum, not a sum, so
 every slot without a winner is below τ and pruning works at any size. The
@@ -84,13 +115,14 @@ python3 scripts/plot.py                                 # re-render assets/ from
 `.github/workflows/bench.yml` runs all of it on three runners in parallel.
 The outputs are in `bench/gha/run{1,2,3}/`; absolute times differ by up to
 45% between runners, while ratios and partition counts don't. First runner,
-`wiki --check` (query time only, after a ~3 s load):
+`wiki --check`. Times are query time only. Decompressing, parsing and hashing
+the dumps takes another ~3 s, so end to end the saving is ~0.3 s of ~3.6 s:
 
 ```
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
   full merge                 643.0     213.6       0.0     416.8    1.00x    1.00x  256/256        0.0%
-  partition totals           688.1     250.6       0.0     423.8    0.93x    0.98x  256/256        0.0%
-  slots (16)                 323.8     254.1       0.0      42.0    1.99x    9.93x   14/256       94.5%
+  partition totals           687.9     251.4       0.0     420.3    0.93x    0.99x  256/256        0.0%
+  slots (16)                 323.5     254.5       0.1      43.0    1.99x    9.69x   14/256       94.5%
   slots (16) + filter        317.5     257.9       0.1      38.5    2.03x   10.82x   14/256       96.0%
 ```
 
@@ -164,7 +196,8 @@ data for scale):
 | DuckDB, same 64-bit hashed key | 191 ms | | |
 
 Q16 gains less than the pageviews. Pre-aggregation collapses 20M rows into
-~6.3M partials, so the merge is only a quarter of the query.
+5.5-6.4M partials (the count varies with when threads switch to bypassing
+the pre-aggregation table), so the merge is only a quarter of the query.
 
 **Synthetic Zipf(s)**, 20M rows over 4M keys, k = 10, 256 partitions:
 

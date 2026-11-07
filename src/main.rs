@@ -15,7 +15,8 @@ USAGE:
                  [--sections skew,slots,k,partitions,overhead]
   groupcut wiki  [--by page|title] [--agg sum|count|max] [--k K] [--reps R]
                  [--partition-bits B] [--adaptive 0|1] [--check] [--json FILE] FILES...
-  groupcut keys  [--k K] [--reps R] [--partition-bits B] [--check] [--json FILE] FILE
+  groupcut keys  [--k K] [--reps R] [--partition-bits B] [--slot-bits S] [--check]
+                 [--json FILE] FILE
 
 demo   one synthetic Zipf workload, every strategy, checked against a
        naive HashMap + sort reference
@@ -242,6 +243,25 @@ fn check_same(ms: &[Measured], expect: &[(u64, i64)]) {
             std::process::exit(1);
         }
     }
+}
+
+/// The four strategies, with `slot_bits` for the two slot variants.
+fn strategies(slot_bits: u32) -> [Strategy; 4] {
+    [
+        Strategy::Full,
+        Strategy::Prune {
+            slot_bits: 0,
+            filter: false,
+        },
+        Strategy::Prune {
+            slot_bits,
+            filter: false,
+        },
+        Strategy::Prune {
+            slot_bits,
+            filter: true,
+        },
+    ]
 }
 
 fn configs(threads: usize, partition_bits: u32, strategies: &[Strategy]) -> Vec<Config> {
@@ -650,6 +670,7 @@ fn keys_cmd(a: &Args) {
     let reps: usize = a.get("reps", 5);
     let threads: usize = a.get("threads", default_threads());
     let partition_bits: u32 = a.get("partition-bits", 8);
+    let slot_bits: u32 = a.get("slot-bits", 4);
     let check = a.rest.iter().any(|r| r == "--check");
     let Some(path) = a.rest.iter().find(|r| *r != "--check") else {
         die("keys needs a file of little-endian u64 keys");
@@ -680,7 +701,7 @@ fn keys_cmd(a: &Args) {
         &vals,
         AggKind::Count,
         k,
-        &configs(threads, partition_bits, &STRATEGIES),
+        &configs(threads, partition_bits, &strategies(slot_bits)),
         reps,
     );
     check_same(&m, &m[0].result.clone());

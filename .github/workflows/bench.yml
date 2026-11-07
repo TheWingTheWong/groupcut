@@ -36,6 +36,8 @@ jobs:
           python3 -m pip install --quiet duckdb numpy
           python3 scripts/clickbench_q16.py --files 20 --threads "$(nproc)" | tee bench/q16-duckdb-gha.txt
           ./target/release/groupcut keys --reps 7 --check --json bench/q16-gha.json data/q16.u64 | tee bench/q16-gha.txt
+          ./target/release/groupcut keys --reps 7 --slot-bits 8 --json bench/q16-gha-s8.json data/q16.u64 | tee bench/q16-gha-s8.txt
+          ./target/release/groupcut keys --reps 7 --partition-bits 12 --json bench/q16-gha-p12.json data/q16.u64 | tee bench/q16-gha-p12.txt
           rm -rf data/clickbench
       - name: Demo
         run: ./target/release/groupcut demo | tee bench/demo-gha.txt

@@ -31,6 +31,12 @@ jobs:
         run: |
           python3 -m pip install --quiet duckdb
           python3 scripts/duckdb_compare.py --threads "$(nproc)" data/*.gz | tee bench/duckdb-gha.txt
+      - name: ClickBench Q16 on the first 20 of 100 hits partitions (~2.4 GB)
+        run: |
+          python3 -m pip install --quiet duckdb numpy
+          python3 scripts/clickbench_q16.py --files 20 --threads "$(nproc)" | tee bench/q16-duckdb-gha.txt
+          ./target/release/groupcut keys --reps 7 --check --json bench/q16-gha.json data/q16.u64 | tee bench/q16-gha.txt
+          rm -rf data/clickbench
       - name: Demo
         run: ./target/release/groupcut demo | tee bench/demo-gha.txt
       - name: Synthetic sweeps

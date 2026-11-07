@@ -11,7 +11,7 @@ use crate::hash::hash_bytes;
 use std::collections::{HashMap, HashSet};
 use std::io::{BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum GroupBy {
@@ -21,21 +21,39 @@ pub enum GroupBy {
     Title,
 }
 
-fn open(path: &Path) -> std::io::Result<Box<dyn Read + Send>> {
+/// A reader for `path`, decompressing `.gz` through `gzip -dc`. The child, if
+/// any, must be checked with `finish` once the stream is drained.
+fn open(path: &Path) -> std::io::Result<(Box<dyn Read + Send>, Option<Child>)> {
     if path.extension().is_some_and(|e| e == "gz") {
-        let child = Command::new("gzip")
+        let mut child = Command::new("gzip")
             .arg("-dc")
             .arg(path)
             .stdout(Stdio::piped())
             .spawn()?;
-        Ok(Box::new(child.stdout.unwrap()))
+        let out = child.stdout.take().unwrap();
+        Ok((Box::new(out), Some(child)))
     } else {
-        Ok(Box::new(std::fs::File::open(path)?))
+        Ok((Box::new(std::fs::File::open(path)?), None))
     }
 }
 
+/// A missing or truncated file must be an error, not a smaller input.
+fn finish(path: &Path, child: Option<Child>) -> std::io::Result<()> {
+    if let Some(mut child) = child {
+        let status = child.wait()?;
+        if !status.success() {
+            return Err(std::io::Error::other(format!(
+                "gzip -dc {} failed ({status}); refusing to answer from partial input",
+                path.display()
+            )));
+        }
+    }
+    Ok(())
+}
+
 fn for_each_line(path: &Path, mut f: impl FnMut(&[u8], &[u8], i64)) -> std::io::Result<()> {
-    let mut r = BufReader::with_capacity(1 << 20, open(path)?);
+    let (reader, child) = open(path)?;
+    let mut r = BufReader::with_capacity(1 << 20, reader);
     let mut line = Vec::with_capacity(512);
     loop {
         line.clear();
@@ -54,7 +72,8 @@ fn for_each_line(path: &Path, mut f: impl FnMut(&[u8], &[u8], i64)) -> std::io::
         };
         f(domain, title, views);
     }
-    Ok(())
+    drop(r);
+    finish(path, child)
 }
 
 fn key(by: GroupBy, domain: &[u8], title: &[u8]) -> u64 {

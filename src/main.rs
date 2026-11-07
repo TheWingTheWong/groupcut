@@ -15,10 +15,13 @@ USAGE:
                  [--sections skew,slots,k,partitions,overhead]
   groupcut wiki  [--by page|title] [--agg sum|count|max] [--k K] [--reps R]
                  [--partition-bits B] [--adaptive 0|1] [--check] [--json FILE] FILES...
+  groupcut keys  [--k K] [--reps R] [--partition-bits B] [--check] [--json FILE] FILE
 
 demo   one synthetic Zipf workload, every strategy, checked against a
        naive HashMap + sort reference
 bench  the sweeps behind the README charts (skew, slots, k, partitions)
+keys   a raw file of little-endian u64 group keys, COUNT(*) per key (used for
+       ClickBench Q16, see scripts/clickbench_q16.py)
 wiki   Wikimedia hourly pageview dumps (.gz or plain), see scripts/fetch-wiki.sh;
        --check also runs the HashMap + sort reference on the full data
 ";
@@ -65,6 +68,12 @@ impl Args {
     }
 }
 
+/// A runtime failure (I/O, bad input data): message only, exit 1.
+fn fail(msg: &str) -> ! {
+    eprintln!("error: {msg}");
+    std::process::exit(1)
+}
+
 fn die(msg: &str) -> ! {
     eprintln!("error: {msg}\n\n{USAGE}");
     std::process::exit(2)
@@ -76,11 +85,16 @@ fn main() {
         print!("{USAGE}");
         return;
     };
+    if argv.iter().any(|a| a == "-h" || a == "--help") {
+        print!("{USAGE}");
+        return;
+    }
     let args = Args::parse(&argv[1..]);
     match cmd.as_str() {
         "demo" => demo(&args),
         "bench" => bench(&args),
         "wiki" => wiki_cmd(&args),
+        "keys" => keys_cmd(&args),
         "-h" | "--help" | "help" => print!("{USAGE}"),
         other => die(&format!("unknown command {other}")),
     }
@@ -202,6 +216,8 @@ fn print_table(ms: &[Measured]) {
         "partitions",
         "skipped"
     );
+    // A ratio of two timings, or 1.0 when both are ~0 (e.g. k = 0).
+    let ratio = |a: f64, b: f64| if b > 1e-9 { a / b } else { 1.0 };
     for m in ms {
         println!(
             "  {:<22} {:>9.1} {:>9.1} {:>9.1} {:>9.1} {:>7.2}x {:>7.2}x {:>4}/{:<5} {:>8.1}%",
@@ -210,8 +226,8 @@ fn print_table(ms: &[Measured]) {
             m.local_ms,
             m.sketch_ms,
             m.merge_ms,
-            base / m.total_ms,
-            base_merge / m.merge_ms,
+            ratio(base, m.total_ms),
+            ratio(base_merge, m.merge_ms),
             m.stats.partitions_merged,
             m.stats.partitions,
             100.0 * m.stats.entries_skipped_frac()
@@ -538,7 +554,7 @@ fn wiki_cmd(a: &Args) {
     }
 
     let t = Instant::now();
-    let (keys, vals) = wiki::load(&paths, by).unwrap_or_else(|e| die(&e.to_string()));
+    let (keys, vals) = wiki::load(&paths, by).unwrap_or_else(|e| fail(&e.to_string()));
     let load_ms = ms(t.elapsed());
     println!(
         "loaded {} rows from {} file(s) in {:.1} s (gunzip + parse + hash; not part of the query times below)",
@@ -579,7 +595,7 @@ fn wiki_cmd(a: &Args) {
     };
 
     let wanted: Vec<u64> = m[0].result.iter().map(|r| r.0).collect();
-    let names = wiki::names(&paths, by, &wanted).unwrap_or_else(|e| die(&e.to_string()));
+    let names = wiki::names(&paths, by, &wanted).unwrap_or_else(|e| fail(&e.to_string()));
     println!();
     for (i, (key, val)) in m[0].result.iter().enumerate() {
         let n = names.get(key).cloned().unwrap_or_default();
@@ -624,5 +640,72 @@ fn wiki_cmd(a: &Args) {
         j.push_str("}\n");
         std::fs::write(path, j).unwrap_or_else(|e| die(&format!("writing {path}: {e}")));
         println!("wrote {path}");
+    }
+}
+
+// ----------------------------------------------------------------- keys ----
+
+fn keys_cmd(a: &Args) {
+    let k: usize = a.get("k", 10);
+    let reps: usize = a.get("reps", 5);
+    let threads: usize = a.get("threads", default_threads());
+    let partition_bits: u32 = a.get("partition-bits", 8);
+    let check = a.rest.iter().any(|r| r == "--check");
+    let Some(path) = a.rest.iter().find(|r| *r != "--check") else {
+        die("keys needs a file of little-endian u64 keys");
+    };
+    let t = Instant::now();
+    let bytes = std::fs::read(path).unwrap_or_else(|e| fail(&format!("{path}: {e}")));
+    if bytes.len() % 8 != 0 {
+        die(&format!(
+            "{path}: length {} is not a multiple of 8",
+            bytes.len()
+        ));
+    }
+    let keys: Vec<u64> = bytes
+        .chunks_exact(8)
+        .map(|c| u64::from_le_bytes(c.try_into().unwrap()))
+        .collect();
+    drop(bytes);
+    let vals = vec![1i64; keys.len()];
+    let load_ms = ms(t.elapsed());
+    println!(
+        "loaded {} keys from {path} in {:.0} ms",
+        keys.len(),
+        load_ms
+    );
+    println!("\nSELECT key, COUNT(*) FROM t GROUP BY key ORDER BY 2 DESC LIMIT {k}\n");
+    let m = measure(
+        &keys,
+        &vals,
+        AggKind::Count,
+        k,
+        &configs(threads, partition_bits, &STRATEGIES),
+        reps,
+    );
+    check_same(&m, &m[0].result.clone());
+    let checked = if check {
+        let expect = reference::top_k(&keys, &vals, AggKind::Count, k);
+        check_same(&m, &expect);
+        "; all match the HashMap + sort reference"
+    } else {
+        ""
+    };
+    for (i, (key, val)) in m[0].result.iter().enumerate() {
+        println!("  {:>2}. {:>10}  {key:016x}", i + 1, val);
+    }
+    println!();
+    print_table(&m);
+    println!(
+        "  {} distinct keys, {} partial aggregates; answers identical across strategies{checked}",
+        m[0].stats.groups_merged, m[0].stats.local_entries
+    );
+    if let Some((_, out)) = a.flags.iter().find(|(n, _)| n == "json") {
+        let j = format!(
+            "{{\"rows\":{},\"k\":{k},\"threads\":{threads},\"reps\":{reps},\"runs\":{}}}\n",
+            keys.len(),
+            json_list(&m)
+        );
+        std::fs::write(out, j).unwrap_or_else(|e| die(&format!("writing {out}: {e}")));
     }
 }

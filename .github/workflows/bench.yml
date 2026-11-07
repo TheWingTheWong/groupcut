@@ -1,5 +1,5 @@
 # Reproduce the README numbers on a GitHub-hosted runner. Manual trigger only:
-# it downloads ~270 MB of Wikipedia pageview dumps and runs for ~15 minutes.
+# it downloads ~300 MB of Wikipedia pageview dumps and runs for ~5 minutes.
 name: bench
 
 on:

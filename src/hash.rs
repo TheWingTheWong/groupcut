@@ -46,7 +46,10 @@ impl Layout {
     pub fn new(partition_bits: u32, slot_bits: u32) -> Self {
         assert!(partition_bits <= 16, "at most 65536 partitions");
         assert!(slot_bits <= 12, "at most 4096 slots per partition");
-        Layout { partition_bits, slot_bits }
+        Layout {
+            partition_bits,
+            slot_bits,
+        }
     }
 
     #[inline(always)]

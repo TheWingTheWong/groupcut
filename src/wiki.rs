@@ -23,7 +23,11 @@ pub enum GroupBy {
 
 fn open(path: &Path) -> std::io::Result<Box<dyn Read + Send>> {
     if path.extension().is_some_and(|e| e == "gz") {
-        let child = Command::new("gzip").arg("-dc").arg(path).stdout(Stdio::piped()).spawn()?;
+        let child = Command::new("gzip")
+            .arg("-dc")
+            .arg(path)
+            .stdout(Stdio::piped())
+            .spawn()?;
         Ok(Box::new(child.stdout.unwrap()))
     } else {
         Ok(Box::new(std::fs::File::open(path)?))
@@ -39,8 +43,15 @@ fn for_each_line(path: &Path, mut f: impl FnMut(&[u8], &[u8], i64)) -> std::io::
             break;
         }
         let mut it = line.trim_ascii_end().split(|&b| b == b' ');
-        let (Some(domain), Some(title), Some(views)) = (it.next(), it.next(), it.next()) else { continue };
-        let Some(views) = std::str::from_utf8(views).ok().and_then(|s| s.parse::<i64>().ok()) else { continue };
+        let (Some(domain), Some(title), Some(views)) = (it.next(), it.next(), it.next()) else {
+            continue;
+        };
+        let Some(views) = std::str::from_utf8(views)
+            .ok()
+            .and_then(|s| s.parse::<i64>().ok())
+        else {
+            continue;
+        };
         f(domain, title, views);
     }
     Ok(())
@@ -84,7 +95,11 @@ pub fn load(paths: &[PathBuf], by: GroupBy) -> std::io::Result<(Vec<u64>, Vec<i6
 
 /// Recover display names for `wanted` keys. Returns key -> every distinct
 /// string that hashed to it (more than one would be a 64-bit collision).
-pub fn names(paths: &[PathBuf], by: GroupBy, wanted: &[u64]) -> std::io::Result<HashMap<u64, Vec<String>>> {
+pub fn names(
+    paths: &[PathBuf],
+    by: GroupBy,
+    wanted: &[u64],
+) -> std::io::Result<HashMap<u64, Vec<String>>> {
     let wanted: HashSet<u64> = wanted.iter().copied().collect();
     let mut out: HashMap<u64, HashSet<String>> = HashMap::new();
     for p in paths {
@@ -92,12 +107,19 @@ pub fn names(paths: &[PathBuf], by: GroupBy, wanted: &[u64]) -> std::io::Result<
             let k = key(by, d, t);
             if wanted.contains(&k) {
                 let name = match by {
-                    GroupBy::Page => format!("{} {}", String::from_utf8_lossy(d), String::from_utf8_lossy(t)),
+                    GroupBy::Page => format!(
+                        "{} {}",
+                        String::from_utf8_lossy(d),
+                        String::from_utf8_lossy(t)
+                    ),
                     GroupBy::Title => String::from_utf8_lossy(t).into_owned(),
                 };
                 out.entry(k).or_default().insert(name);
             }
         })?;
     }
-    Ok(out.into_iter().map(|(k, v)| (k, v.into_iter().collect())).collect())
+    Ok(out
+        .into_iter()
+        .map(|(k, v)| (k, v.into_iter().collect()))
+        .collect())
 }

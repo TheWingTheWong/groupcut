@@ -50,7 +50,10 @@ fn workload(rng: &mut Rng) -> (Vec<u64>, Vec<i64>) {
 fn random_strategy(rng: &mut Rng) -> Strategy {
     match rng.below(3) {
         0 => Strategy::Full,
-        _ => Strategy::Prune { slot_bits: rng.below(7) as u32, filter: rng.below(2) == 1 },
+        _ => Strategy::Prune {
+            slot_bits: rng.below(7) as u32,
+            filter: rng.below(2) == 1,
+        },
     }
 }
 
@@ -77,18 +80,28 @@ fn every_configuration_matches_the_reference() {
                 };
                 let (got, stats) = top_k(&keys, &vals, agg, k, &cfg);
                 assert_eq!(
-                    got, expect,
+                    got,
+                    expect,
                     "case {case}: {agg:?} k={k} rows={} cfg={cfg:?}",
                     keys.len()
                 );
-                assert_eq!(stats.partitions_merged + stats.partitions_pruned, stats.partitions);
+                assert_eq!(
+                    stats.partitions_merged + stats.partitions_pruned,
+                    stats.partitions
+                );
                 if cfg.strategy == Strategy::Full && k > 0 {
                     assert_eq!(stats.partitions_pruned, 0);
                     assert_eq!(stats.entries_filtered, 0);
                 }
                 assert_eq!(
-                    stats.entries_merged + stats.entries_filtered
-                        + stats.detail.iter().filter(|d| !d.merged).map(|d| d.entries).sum::<u64>(),
+                    stats.entries_merged
+                        + stats.entries_filtered
+                        + stats
+                            .detail
+                            .iter()
+                            .filter(|d| !d.merged)
+                            .map(|d| d.entries)
+                            .sum::<u64>(),
                     stats.local_entries,
                     "every partial is merged, filtered, or in a pruned partition"
                 );
@@ -112,7 +125,12 @@ fn ties_are_broken_by_key_and_never_pruned_away() {
     let vals = vec![1i64; keys.len()];
     for slot_bits in 0..=6 {
         for filter in [false, true] {
-            let cfg = Config { threads: 4, partition_bits: 6, preagg_bits: 8, strategy: Strategy::Prune { slot_bits, filter } };
+            let cfg = Config {
+                threads: 4,
+                partition_bits: 6,
+                preagg_bits: 8,
+                strategy: Strategy::Prune { slot_bits, filter },
+            };
             let (got, _) = top_k(&keys, &vals, AggKind::Count, 25, &cfg);
             let expect: Vec<(u64, i64)> = (0..25).map(|g| (g, 4)).collect();
             assert_eq!(got, expect);
@@ -132,7 +150,10 @@ fn sketch_counters_bound_every_group() {
             for (key, val) in reference::top_k(&keys, &vals, agg, usize::MAX) {
                 let h = mix(key);
                 let bound = sketch[layout.partition(h) * layout.slots() + layout.slot(h)];
-                assert!(val <= bound, "{agg:?}: group {key} = {val} exceeds its slot bound {bound}");
+                assert!(
+                    val <= bound,
+                    "{agg:?}: group {key} = {val} exceeds its slot bound {bound}"
+                );
             }
         }
     }
@@ -155,7 +176,15 @@ fn negative_sums_do_not_break_the_bound() {
     let expect = reference::top_k(&keys, &vals, AggKind::Sum, 10);
     for slot_bits in [0, 2, 5] {
         for threads in [1, 3, 8] {
-            let cfg = Config { threads, partition_bits: 3, preagg_bits: 6, strategy: Strategy::Prune { slot_bits, filter: true } };
+            let cfg = Config {
+                threads,
+                partition_bits: 3,
+                preagg_bits: 6,
+                strategy: Strategy::Prune {
+                    slot_bits,
+                    filter: true,
+                },
+            };
             assert_eq!(top_k(&keys, &vals, AggKind::Sum, 10, &cfg).0, expect);
         }
     }
@@ -168,10 +197,22 @@ fn skewed_data_actually_prunes() {
     let mut rng = Rng::new(5);
     let keys: Vec<u64> = (0..400_000).map(|_| rank_key(z.sample(&mut rng))).collect();
     let vals = vec![1i64; keys.len()];
-    let cfg = Config { threads: 4, partition_bits: 8, preagg_bits: 12, strategy: Strategy::Prune { slot_bits: 4, filter: true } };
+    let cfg = Config {
+        threads: 4,
+        partition_bits: 8,
+        preagg_bits: 12,
+        strategy: Strategy::Prune {
+            slot_bits: 4,
+            filter: true,
+        },
+    };
     let (got, stats) = top_k(&keys, &vals, AggKind::Count, 10, &cfg);
     assert_eq!(got, reference::top_k(&keys, &vals, AggKind::Count, 10));
-    assert!(stats.partitions_pruned > 200, "pruned only {} of 256", stats.partitions_pruned);
+    assert!(
+        stats.partitions_pruned > 200,
+        "pruned only {} of 256",
+        stats.partitions_pruned
+    );
     assert!(stats.entries_skipped_frac() > 0.9);
 }
 
@@ -181,7 +222,15 @@ fn uniform_data_prunes_nothing_but_stays_exact() {
     // sketch cannot help. The result must still be right.
     let keys: Vec<u64> = (0..200_000u64).map(|i| mix(i % 50_000)).collect();
     let vals = vec![1i64; keys.len()];
-    let cfg = Config { threads: 4, partition_bits: 8, preagg_bits: 10, strategy: Strategy::Prune { slot_bits: 4, filter: true } };
+    let cfg = Config {
+        threads: 4,
+        partition_bits: 8,
+        preagg_bits: 10,
+        strategy: Strategy::Prune {
+            slot_bits: 4,
+            filter: true,
+        },
+    };
     let (got, stats) = top_k(&keys, &vals, AggKind::Count, 10, &cfg);
     assert_eq!(got, reference::top_k(&keys, &vals, AggKind::Count, 10));
     assert_eq!(stats.partitions_pruned, 0);
@@ -199,7 +248,15 @@ fn results_do_not_depend_on_thread_count() {
     let mut answers: HashMap<AggKind, Vec<(u64, i64)>> = HashMap::new();
     for threads in 1..=12 {
         for agg in AGGS {
-            let cfg = Config { threads, partition_bits: 5, preagg_bits: 9, strategy: Strategy::Prune { slot_bits: 3, filter: true } };
+            let cfg = Config {
+                threads,
+                partition_bits: 5,
+                preagg_bits: 9,
+                strategy: Strategy::Prune {
+                    slot_bits: 3,
+                    filter: true,
+                },
+            };
             let got = top_k(&keys, &vals, agg, 50, &cfg).0;
             let prev = answers.entry(agg).or_insert_with(|| got.clone());
             assert_eq!(&got, prev, "{agg:?} threads={threads}");

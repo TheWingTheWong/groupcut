@@ -63,9 +63,18 @@ impl Strategy {
     pub fn label(&self) -> String {
         match *self {
             Strategy::Full => "full merge".into(),
-            Strategy::Prune { slot_bits: 0, filter: false } => "partition totals".into(),
-            Strategy::Prune { slot_bits, filter: false } => format!("slots ({})", 1 << slot_bits),
-            Strategy::Prune { slot_bits, filter: true } => format!("slots ({}) + filter", 1 << slot_bits),
+            Strategy::Prune {
+                slot_bits: 0,
+                filter: false,
+            } => "partition totals".into(),
+            Strategy::Prune {
+                slot_bits,
+                filter: false,
+            } => format!("slots ({})", 1 << slot_bits),
+            Strategy::Prune {
+                slot_bits,
+                filter: true,
+            } => format!("slots ({}) + filter", 1 << slot_bits),
         }
     }
 }
@@ -82,10 +91,15 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            threads: std::thread::available_parallelism().map(|n| n.get()).unwrap_or(4),
+            threads: std::thread::available_parallelism()
+                .map(|n| n.get())
+                .unwrap_or(4),
             partition_bits: 8,
             preagg_bits: 14,
-            strategy: Strategy::Prune { slot_bits: 4, filter: true },
+            strategy: Strategy::Prune {
+                slot_bits: 4,
+                filter: true,
+            },
         }
     }
 }
@@ -140,7 +154,13 @@ impl Stats {
 }
 
 /// Run the query. Returns `(key, value)` pairs, best first.
-pub fn top_k(keys: &[u64], vals: &[i64], agg: AggKind, k: usize, cfg: &Config) -> (Vec<(u64, i64)>, Stats) {
+pub fn top_k(
+    keys: &[u64],
+    vals: &[i64],
+    agg: AggKind,
+    k: usize,
+    cfg: &Config,
+) -> (Vec<(u64, i64)>, Stats) {
     match agg {
         AggKind::Count => run::<Count>(keys, vals, k, cfg),
         AggKind::Sum => run::<Sum>(keys, vals, k, cfg),
@@ -149,7 +169,11 @@ pub fn top_k(keys: &[u64], vals: &[i64], agg: AggKind, k: usize, cfg: &Config) -
 }
 
 fn run<A: AggOp>(keys: &[u64], vals: &[i64], k: usize, cfg: &Config) -> (Vec<(u64, i64)>, Stats) {
-    assert_eq!(keys.len(), vals.len(), "keys and values must have the same length");
+    assert_eq!(
+        keys.len(),
+        vals.len(),
+        "keys and values must have the same length"
+    );
     let start = Instant::now();
     let (slot_bits, prune, filter) = match cfg.strategy {
         Strategy::Full => (0, false, false),
@@ -159,7 +183,11 @@ fn run<A: AggOp>(keys: &[u64], vals: &[i64], k: usize, cfg: &Config) -> (Vec<(u6
     let parts = layout.partitions();
     let slots = layout.slots();
     let threads = cfg.threads.max(1);
-    let mut stats = Stats { rows: keys.len() as u64, partitions: parts as u64, ..Default::default() };
+    let mut stats = Stats {
+        rows: keys.len() as u64,
+        partitions: parts as u64,
+        ..Default::default()
+    };
 
     // ---- Phase 1: pre-aggregate, flush partials into partitions ----------
     let t = Instant::now();
@@ -176,7 +204,11 @@ fn run<A: AggOp>(keys: &[u64], vals: &[i64], k: usize, cfg: &Config) -> (Vec<(u6
                 s.spawn(move || {
                     let mut local = Local {
                         bufs: (0..parts).map(|_| Vec::new()).collect(),
-                        sketch: if prune { vec![A::BOUND_ZERO; parts * slots] } else { Vec::new() },
+                        sketch: if prune {
+                            vec![A::BOUND_ZERO; parts * slots]
+                        } else {
+                            Vec::new()
+                        },
                     };
                     let mut table = AggTable::fixed(preagg_cap);
                     loop {
@@ -202,7 +234,10 @@ fn run<A: AggOp>(keys: &[u64], vals: &[i64], k: usize, cfg: &Config) -> (Vec<(u6
     stats.local = t.elapsed();
 
     let mut detail: Vec<PartitionInfo> = (0..parts)
-        .map(|p| PartitionInfo { entries: locals.iter().map(|l| l.bufs[p].len() as u64).sum(), ..Default::default() })
+        .map(|p| PartitionInfo {
+            entries: locals.iter().map(|l| l.bufs[p].len() as u64).sum(),
+            ..Default::default()
+        })
         .collect();
     stats.local_entries = detail.iter().map(|d| d.entries).sum();
 
@@ -256,7 +291,11 @@ fn run<A: AggOp>(keys: &[u64], vals: &[i64], k: usize, cfg: &Config) -> (Vec<(u6
                 let (locals, detail, sketch, order) = (&locals, &detail, &sketch, &order);
                 let (next, tau, global) = (&next, &tau, &global);
                 s.spawn(move || {
-                    let mut out = WorkerOut { touched: Vec::new(), merged: 0, groups: 0 };
+                    let mut out = WorkerOut {
+                        touched: Vec::new(),
+                        merged: 0,
+                        groups: 0,
+                    };
                     let mut table = AggTable::with_capacity(est_groups);
                     let mut local_top = TopK::new(k);
                     loop {
@@ -335,7 +374,13 @@ fn run<A: AggOp>(keys: &[u64], vals: &[i64], k: usize, cfg: &Config) -> (Vec<(u6
             }
         }
     }
-    let result = global.into_inner().unwrap().into_sorted().into_iter().map(|e| (e.key, e.val)).collect();
+    let result = global
+        .into_inner()
+        .unwrap()
+        .into_sorted()
+        .into_iter()
+        .map(|e| (e.key, e.val))
+        .collect();
     stats.total = start.elapsed();
     stats.detail = detail;
     (result, stats)
@@ -370,7 +415,13 @@ impl Local {
 /// tests can check the invariant directly: every group's final value is at
 /// most the counter of its slot. Single-threaded, `preagg_bits` as in
 /// `Config`.
-pub fn sketch_bounds(keys: &[u64], vals: &[i64], agg: AggKind, preagg_bits: u32, layout: Layout) -> Vec<i64> {
+pub fn sketch_bounds(
+    keys: &[u64],
+    vals: &[i64],
+    agg: AggKind,
+    preagg_bits: u32,
+    layout: Layout,
+) -> Vec<i64> {
     fn go<A: AggOp>(keys: &[u64], vals: &[i64], preagg_bits: u32, layout: Layout) -> Vec<i64> {
         let parts = layout.partitions();
         let mut local = Local {

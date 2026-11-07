@@ -59,7 +59,9 @@ impl Zipf {
     #[inline]
     pub fn sample(&self, rng: &mut Rng) -> usize {
         let u = rng.unit();
-        self.cdf.partition_point(|&c| c <= u).min(self.cdf.len() - 1)
+        self.cdf
+            .partition_point(|&c| c <= u)
+            .min(self.cdf.len() - 1)
     }
 
     pub fn len(&self) -> usize {
@@ -82,14 +84,26 @@ pub fn rank_key(r: usize) -> u64 {
 /// Generate `rows` rows of `(key, value)` with Zipf-distributed keys over
 /// `groups` ranks and values uniform in `lo..=hi`. Runs on `threads` threads;
 /// output is identical for any thread count.
-pub fn zipf_rows(rows: usize, groups: usize, s: f64, lo: i64, hi: i64, seed: u64, threads: usize) -> (Vec<u64>, Vec<i64>) {
+pub fn zipf_rows(
+    rows: usize,
+    groups: usize,
+    s: f64,
+    lo: i64,
+    hi: i64,
+    seed: u64,
+    threads: usize,
+) -> (Vec<u64>, Vec<i64>) {
     let z = Zipf::new(groups, s);
     let mut keys = vec![0u64; rows];
     let mut vals = vec![0i64; rows];
     const BLOCK: usize = 1 << 16;
     let span = (hi - lo + 1) as u64;
-    let blocks: Vec<(usize, &mut [u64], &mut [i64])> =
-        keys.chunks_mut(BLOCK).zip(vals.chunks_mut(BLOCK)).enumerate().map(|(i, (k, v))| (i, k, v)).collect();
+    let blocks: Vec<(usize, &mut [u64], &mut [i64])> = keys
+        .chunks_mut(BLOCK)
+        .zip(vals.chunks_mut(BLOCK))
+        .enumerate()
+        .map(|(i, (k, v))| (i, k, v))
+        .collect();
     let per = blocks.len().div_ceil(threads.max(1)).max(1);
     let mut blocks = blocks;
     std::thread::scope(|s| {

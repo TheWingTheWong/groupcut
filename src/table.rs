@@ -27,14 +27,26 @@ impl AggTable {
     pub fn with_capacity(groups: usize) -> Self {
         // Keep the load factor at or below 1/2 after `groups` inserts.
         let cap = (groups.max(4) * 2).next_power_of_two();
-        AggTable { buckets: vec![(EMPTY, 0); cap], len: 0, mask: cap - 1, zero_key: None, growable: true }
+        AggTable {
+            buckets: vec![(EMPTY, 0); cap],
+            len: 0,
+            mask: cap - 1,
+            zero_key: None,
+            growable: true,
+        }
     }
 
     /// A table with exactly `buckets` buckets (a power of two) that never
     /// grows. Check `is_full` after each insert.
     pub fn fixed(buckets: usize) -> Self {
         assert!(buckets.is_power_of_two() && buckets >= 8);
-        AggTable { buckets: vec![(EMPTY, 0); buckets], len: 0, mask: buckets - 1, zero_key: None, growable: false }
+        AggTable {
+            buckets: vec![(EMPTY, 0); buckets],
+            len: 0,
+            mask: buckets - 1,
+            zero_key: None,
+            growable: false,
+        }
     }
 
     /// For fixed tables: at 5/8 load, time to flush.

@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Exact top-K GROUP BY with sketch-based partition pruning"
 license = "MIT"
-rust-version = "1.75"
+rust-version = "1.80"
 
 [dependencies]
 

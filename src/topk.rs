@@ -27,7 +27,11 @@ struct Worst(Entry);
 
 impl Ord for Worst {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.0.val.cmp(&self.0.val).then(self.0.key.cmp(&other.0.key))
+        other
+            .0
+            .val
+            .cmp(&self.0.val)
+            .then(self.0.key.cmp(&other.0.key))
     }
 }
 impl PartialOrd for Worst {
@@ -43,7 +47,10 @@ pub struct TopK {
 
 impl TopK {
     pub fn new(k: usize) -> Self {
-        TopK { k, heap: BinaryHeap::with_capacity(k + 1) }
+        TopK {
+            k,
+            heap: BinaryHeap::with_capacity(k + 1),
+        }
     }
 
     #[inline]
@@ -85,7 +92,11 @@ impl TopK {
     /// Best first.
     pub fn into_sorted(self) -> Vec<Entry> {
         // into_sorted_vec is ascending by Ord, i.e. best (least worst) first.
-        self.heap.into_sorted_vec().into_iter().map(|w| w.0).collect()
+        self.heap
+            .into_sorted_vec()
+            .into_iter()
+            .map(|w| w.0)
+            .collect()
     }
 }
 
@@ -100,8 +111,12 @@ mod tests {
         for _ in 0..200 {
             let n = rng.below(300) as usize;
             let k = rng.below(20) as usize;
-            let mut all: Vec<Entry> =
-                (0..n).map(|i| Entry { key: i as u64, val: rng.below(10) as i64 - 5 }).collect();
+            let mut all: Vec<Entry> = (0..n)
+                .map(|i| Entry {
+                    key: i as u64,
+                    val: rng.below(10) as i64 - 5,
+                })
+                .collect();
             // Shuffle so insertion order is not key order.
             for i in (1..all.len()).rev() {
                 all.swap(i, rng.below(i as u64 + 1) as usize);
@@ -113,7 +128,14 @@ mod tests {
             all.sort_by(|a, b| b.val.cmp(&a.val).then(a.key.cmp(&b.key)));
             all.truncate(k);
             let thr = t.threshold();
-            assert_eq!(thr, if all.len() == k && k > 0 { Some(all[k - 1].val) } else { None });
+            assert_eq!(
+                thr,
+                if all.len() == k && k > 0 {
+                    Some(all[k - 1].val)
+                } else {
+                    None
+                }
+            );
             assert_eq!(t.into_sorted(), all);
         }
     }

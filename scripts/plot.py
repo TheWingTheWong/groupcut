@@ -10,6 +10,7 @@ assets/slots.svg. Hover any mark for its exact value (SVG <title>).
 
 import json
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -284,52 +285,63 @@ def slots_chart(res):
     svg.save(ASSETS / "slots.svg")
 
 
-def sizing_chart(run_dir):
-    """Partials skipped vs (partitions x slots) / (sigma / tau), every dataset."""
-    run_dir = Path(run_dir)
-    syn_st = {float(k): v["sigma_over_tau"] for k, v in json.loads((run_dir.parent / "sigma-tau-synthetic.json").read_text()).items()}
-    pts = []  # (dataset, label, ratio, skipped %)
+def top_values(txt):
+    """The aggregate values of the printed top-k list in a wiki/keys output."""
+    return [int(m.group(1)) for m in re.finditer(r"^\s+\d+\.\s+(\d+)\s", Path(txt).read_text(), re.M)]
 
-    def add(dataset, label, sigma_over_tau, run):
+
+def sizing_chart(run_dir):
+    """Partials skipped vs (partitions x slots) / (tail mass / tau)."""
+    run_dir = Path(run_dir)
+    local = json.loads((ROOT / "bench" / "sizing-local.json").read_text())
+    syn = {float(k): v["tail_over_tau"] for k, v in local["synthetic"].items()}
+    pts = {}  # (dataset, partitions, slots) -> (ratio, skipped %); duplicates collapse
+
+    def add(dataset, tail_over_tau, partitions, slots, skipped):
+        pts[(dataset, partitions, slots)] = (partitions * slots / tail_over_tau, skipped)
+
+    def add_run(dataset, tail_over_tau, run):
         name = run["strategy"]
         if name == "full merge" or name.endswith("+ filter"):
             return
         slots = 1 if name == "partition totals" else int(name.split("(")[1].split(")")[0])
-        counters = run["partitions"] * slots
         skipped = 100 * (1 - run["entries_merged"] / run["local_entries"]) if run["local_entries"] else 0
-        pts.append((dataset, f"{label}: {run['partitions']} x {slots}", counters / sigma_over_tau, skipped))
+        add(dataset + (f" s={tail_over_tau[1]}" if isinstance(tail_over_tau, tuple) else ""),
+            tail_over_tau[0] if isinstance(tail_over_tau, tuple) else tail_over_tau, run["partitions"], slots, skipped)
 
     res = json.loads((run_dir / "results-gha.json").read_text())
     for p in res["skew"]:
         for r in p["runs"]:
-            add("synthetic Zipf", f"s={p['s']}", syn_st[float(p["s"])], r)
+            add_run("synthetic Zipf", (syn[float(p["s"])], float(p["s"])), r)
     for r in res["slots"]:
-        add("synthetic Zipf", "s=0.8", syn_st[float(res.get("slots_s", 0.8))], r)
+        add_run("synthetic Zipf", (syn[0.8], 0.8), r)
     for p in res["partitions"]:
         for r in p["runs"]:
-            add("synthetic Zipf", "s=1.0", syn_st[1.0], r)
+            add_run("synthetic Zipf", (syn[1.0], 1.0), r)
+    wtop = top_values(run_dir / "wiki-gha.txt")
     for f in ["wiki-gha.json", "wiki-gha-p10.json", "wiki-gha-p12.json"]:
         w = json.loads((run_dir / f).read_text())
-        sigma = sum(x[0] for x in w["detail"][1])
-        tau = 81265  # 10th value of the answer, identical in every run
+        sigma = sum(x[0] for x in w["detail"][1])  # partition totals add up to the total
         for r in w["runs"]:
-            add("Wikipedia pageviews", "wiki", sigma / tau, r)
-    q16_tau = 2259  # 10th count of Q16 on 20 partitions (DuckDB and groupcut agree)
+            add_run("Wikipedia pageviews", (sigma - sum(wtop)) / wtop[-1], r)
+    qtop = top_values(run_dir / "q16-gha.txt")
     for f in ["q16-gha.json", "q16-gha-s8.json", "q16-gha-p12.json"]:
         q = json.loads((run_dir / f).read_text())
         for r in q["runs"]:
-            add("ClickBench Q16", "Q16", q["rows"] / q16_tau, r)
+            add_run("ClickBench Q16", (q["rows"] - sum(qtop)) / qtop[-1], r)
+    dom = local["dominant"]
+    for r in dom["runs"]:
+        add("one dominant key", dom["tail_over_tau"], r["partitions"], r["slots"], 100 * r["skipped"])
 
-    W, H = 860, 430
+    W, H = 860, 440
     ox, oy, pw, ph = 80, 96, 620, 250
     svg = Svg(W, H)
-    svg.text(24, 32, "The sketch prunes once there are more counters than \u03a3/\u03c4 (runner 1)", 16, INK, weight=600)
-    svg.text(24, 54, f"{len(pts)} configurations on three datasets. x: partitions \u00d7 slots divided by (total of the aggregate / k-th value). "
-             "Hover a point for its setup.", 12, INK2)
+    svg.text(24, 32, "Partition pruning starts once there are more counters than \u03a3_tail/\u03c4", 16, INK, weight=600)
+    svg.text(24, 54, f"{len(pts)} distinct configurations, four datasets. \u03a3_tail = total of the aggregate minus the top k; "
+             "\u03c4 = k-th value. Hover a point.", 12, INK2)
     lo, hi = -4, 2
     def X(r):
-        r = min(max(r, 10 ** lo), 10 ** hi)
-        return ox + (math.log10(r) - lo) / (hi - lo) * pw
+        return ox + (math.log10(min(max(r, 10 ** lo), 10 ** hi)) - lo) / (hi - lo) * pw
     def Y(v):
         return oy + ph - v / 100 * ph
     for v in range(0, 101, 25):
@@ -339,20 +351,31 @@ def sizing_chart(run_dir):
         svg.text(X(10 ** e), oy + ph + 16, f"{10 ** e:g}", 11, MUTED, "middle")
     svg.line(ox, oy + ph, ox + pw, oy + ph, AXIS)
     svg.line(X(1), oy - 6, X(1), oy + ph, AXIS, 1.5)
-    svg.text(X(1) + 6, oy + ph - 40, "counters = \u03a3/\u03c4", 11, INK2)
-    svg.text(ox + pw / 2, oy + ph + 36, "(partitions \u00d7 slots) / (\u03a3/\u03c4), log scale", 11.5, INK2, "middle")
-    svg.text(ox, oy - 14, "partials skipped by partition pruning", 13, INK, weight=600)
-    colors = {"synthetic Zipf": S3, "Wikipedia pageviews": S1, "ClickBench Q16": S2}
-    for ds, label, r, v in pts:
-        svg.add(f'<circle cx="{X(r):.1f}" cy="{Y(v):.1f}" r="5" fill="{colors[ds]}" fill-opacity="0.85" stroke="{SURFACE}" stroke-width="2">'
-                f"<title>{esc(ds)}, {esc(label)}: ratio {r:.2f}, {v:.1f}% skipped</title></circle>")
+    svg.text(X(1) + 6, oy + ph - 40, "counters = \u03a3_tail/\u03c4", 11, INK2)
+    svg.text(ox + pw / 2, oy + ph + 36, "(partitions \u00d7 slots) / (\u03a3_tail/\u03c4), log scale", 11.5, INK2, "middle")
+    svg.text(ox, oy - 14, "partials skipped by partition pruning (runner 1)", 13, INK, weight=600)
+    colors = {"synthetic Zipf": S3, "Wikipedia pageviews": S1, "ClickBench Q16": S2, "one dominant key": INK2}
+    for (ds, parts, slots), (r, v) in sorted(pts.items()):
+        base = ds.split(" s=")[0]
+        c = colors[base]
+        tip = f"{esc(ds)}, {parts} x {slots}: ratio {r:.2f}, {v:.1f}% skipped"
+        if base == "one dominant key":  # a different shape, not a fourth hue
+            x, y = X(r), Y(v)
+            svg.add(f'<rect x="{x - 5:.1f}" y="{y - 5:.1f}" width="10" height="10" fill="{c}" stroke="{SURFACE}" stroke-width="2" '
+                    f'transform="rotate(45 {x:.1f} {y:.1f})"><title>{tip}</title></rect>')
+        else:
+            svg.add(f'<circle cx="{X(r):.1f}" cy="{Y(v):.1f}" r="5" fill="{c}" fill-opacity="0.85" stroke="{SURFACE}" stroke-width="2">'
+                    f"<title>{tip}</title></circle>")
     lx = ox
     for ds, c in colors.items():
-        svg.add(f'<circle cx="{lx + 6}" cy="{H - 26}" r="5" fill="{c}"/>')
+        if ds == "one dominant key":
+            svg.add(f'<rect x="{lx + 1}" y="{H - 31}" width="10" height="10" fill="{c}" transform="rotate(45 {lx + 6} {H - 26})"/>')
+        else:
+            svg.add(f'<circle cx="{lx + 6}" cy="{H - 26}" r="5" fill="{c}"/>')
         svg.text(lx + 16, H - 22, ds, 12, INK2)
         lx += 16 + len(ds) * 6.8 + 30
     svg.save(ASSETS / "sizing.svg")
-
+    return pts
 
 def main():
     ASSETS.mkdir(exist_ok=True)

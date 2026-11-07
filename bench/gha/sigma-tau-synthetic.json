@@ -1,8 +1,0 @@
-{
-  "0": {"sigma": 20000000, "tau": 18, "sigma_over_tau": 1111111.1},
-  "0.5": {"sigma": 20000000, "tau": 1617, "sigma_over_tau": 12368.6},
-  "0.8": {"sigma": 20000000, "tau": 31658, "sigma_over_tau": 631.8},
-  "1": {"sigma": 20000000, "tau": 126991, "sigma_over_tau": 157.5},
-  "1.2": {"sigma": 20000000, "tau": 235599, "sigma_over_tau": 84.9},
-  "1.5": {"sigma": 20000000, "tau": 242182, "sigma_over_tau": 82.6}
-}

@@ -8,31 +8,29 @@ parallel hash-aggregation engine in Rust (no dependencies). It keeps a small
 sketch of upper bounds per hash partition and skips the partitions that
 cannot contain one of the top k. Answers are exact.
 
-**The finding:** the sketch prunes once its number of counters
-(partitions × slots) exceeds **Σ/τ**, the total of the aggregate divided by
-the k-th best value. Below that, it prunes essentially nothing. Over 43
-configurations on three datasets:
+**The finding:** for COUNT and SUM, the sketch prunes once its number of
+counters (partitions × slots) exceeds **Σ_tail/τ**. Here Σ_tail is the total of
+the aggregate minus the top k's share, and τ is the k-th best value. Below
+that ratio it prunes almost nothing. Across 45 distinct configurations on four
+datasets (each checked on three CI runners):
 
-- the 15 with fewer than 0.81 × Σ/τ counters skipped at most 0.35% of the
-  merge input (one partition, once);
-- the 28 with more than 1.6 × Σ/τ skipped at least 31%, and at least 84%
-  everywhere except one 16-partition setup.
+- every configuration below a ratio of 1 skipped at most 0.35% of the merge;
+- one at 1.02 skipped 1.5%;
+- every one at 1.5 or above skipped at least 81%, except a 16-partition setup
+  where the 10 winners occupy most partitions (31%).
 
-No configuration landed between 0.81 and 1.6, so the exact crossover isn't
-pinned down.
-
-![Partials skipped vs counters relative to Σ/τ](assets/sizing.svg)
+![Partials skipped vs counters relative to Σ_tail/τ](assets/sizing.svg)
 
 Two of those datasets show both sides of the rule:
 
-- **Wikipedia pageviews** (6 hours, 34.6M rows, Σ/τ ≈ 1,300). The default
+- **Wikipedia pageviews** (6 hours, 34.6M rows, Σ_tail/τ ≈ 1,280). The default
   256 partitions × 16 slots skip 242 of 256 partitions. The query runs
   **1.8-2.0x faster** than a full merge on three separate GitHub Actions
   runners. One counter per partition (the post's first version) prunes
   nothing until 4096 partitions, and even there it is 1.4-1.6x slower than
   256 × 16.
 - **ClickBench Q16**, the query the post measured (20 of the 100 `hits`
-  partitions, 20M rows, Σ/τ ≈ 8,900). The same 256 × 16 setting prunes
+  partitions, 20M rows, Σ_tail/τ ≈ 8,800). The same 256 × 16 setting prunes
   **nothing**. It takes 65,536 counters (256 × 256 or 4096 × 16) to skip
   95-99% of the merge, and then the query is 1.11-1.23x faster. The post
   reports 1.6x on the full 100M rows.
@@ -42,17 +40,31 @@ Wikipedia top 10 is also identical to DuckDB's.
 
 ## Why the rule holds
 
-A typical slot counter is about Σ/(P·S), and a partition can only be skipped
-if all its counters are below τ. So P·S must exceed Σ/τ before any skipping
-happens. A few slots stay above τ because they contain the actual winners;
-those are the ~k partitions that still get merged. Σ/τ is large when the k-th
-value is a small share of the total: little skew, many groups, or a large k.
-At k = 1000 nothing prunes on any of the datasets here.
+A slot can be skipped only if its counter is below τ. The k winners' slots are
+merged anyway, so what has to be spread thin is everything else, Σ_tail. Hashed
+evenly over P·S counters, a typical counter is Σ_tail/(P·S), and it falls below
+τ once P·S > Σ_tail/τ. The ratio is large when the k-th value is small
+compared with the rest: little skew, many groups, or a large k. At k = 1000
+nothing prunes on any dataset here.
+
+An earlier version of this README used the full total Σ instead of Σ_tail. A
+reviewer broke it with one key holding 10M of 10.2M rows. Σ/τ is then ~102,000,
+but the dominant key sits in a slot that is merged anyway. Σ_tail/τ ≈ 2,000
+predicts what happens: 1,024 counters prune nothing, 2,048 prune 1.5%, and
+4,096 prune 96% (`bench/sizing-local.json`, from
+`cargo run --release --example sigma_tau`). On the pageviews and Q16 the top
+10 hold under 2% of the mass, so both versions agree there. They differ most
+on strongly skewed synthetic data (s ≥ 1.2), where every configuration is far
+above the threshold either way.
+
+The rule says nothing about MAX. Its counters hold a maximum, not a sum, so
+every slot without a winner is below τ and pruning works at any size. The
+optional per-slot `filter` can skip a few percent of partials below the
+threshold (4% on a 5M-row Q16 slice), because it acts on single slots.
 
 The post's per-partition total is the case S = 1. It works when P alone
-exceeds Σ/τ (synthetic Zipf with s ≥ 1, where Σ/τ ≈ 160) and fails on the
-pageviews, where the smallest of 256 partition totals is 365,480 against
-τ = 81,265.
+exceeds Σ_tail/τ (synthetic Zipf with s ≥ 1). It fails on the pageviews, where
+the smallest of 256 partition totals is 365,480 and τ is 81,265.
 
 ## Quickstart
 
@@ -64,7 +76,7 @@ cargo run --release -- wiki --check data/*.gz           # the Wikipedia query
 uv run --with duckdb --with numpy python scripts/clickbench_q16.py --files 20
 cargo run --release -- keys --check --slot-bits 8 data/q16.u64   # Q16 with 256 x 256 counters
 cargo run --release -- bench                            # synthetic sweeps (5-15 min)
-cargo run --release --example sigma_tau                 # Σ/τ for the synthetic workloads
+cargo run --release --example sigma_tau                 # Σ_tail/τ, synthetic + dominant-key workloads
 python3 scripts/plot.py                                 # re-render assets/ from bench/gha/run1
 ```
 
@@ -155,12 +167,12 @@ Q16 gains less than the pageviews. Pre-aggregation collapses 20M rows into
 
 **Synthetic Zipf(s)**, 20M rows over 4M keys, k = 10, 256 partitions:
 
-| s | Σ/τ | full merge | totals (256 counters) | slots ×16 + filter (4096) |
+| s | Σ_tail/τ | full merge | totals (256 counters) | slots ×16 + filter (4096) |
 |---|---|---|---|---|
-| 0.5 | 12,369 | 257 ms | merged 256 · 0.97x | merged 256 · 0.93x |
-| 0.8 | 632 | 286 ms | merged 256 · 0.95x | merged 11 · 1.35x |
-| 1.0 | 157 | 195 ms | merged 17 · 1.27x | merged 11 · 1.24x |
-| 1.5 | 83 | 37 ms | merged 11 · 1.03x | merged 11 · 1.03x |
+| 0.5 | 12,353 | 257 ms | merged 256 · 0.97x | merged 256 · 0.93x |
+| 0.8 | 609 | 286 ms | merged 256 · 0.95x | merged 11 · 1.35x |
+| 1.0 | 128 | 195 ms | merged 17 · 1.27x | merged 11 · 1.24x |
+| 1.5 | 20 | 37 ms | merged 11 · 1.03x | merged 11 · 1.03x |
 
 At s = 0.8 the slot ablation crosses the threshold where the rule says it
 should: 2 slots (512 counters) merge 255 partitions, and 4 slots (1,024)
@@ -188,7 +200,7 @@ CI runs fmt, clippy `-D warnings`, the tests and the demo on Linux and macOS.
 ## Limitations
 
 - The rule tells you whether a configuration *can* prune, but the engine
-  doesn't pick S from it: τ isn't known until phase 2. Choosing slots from a
+  doesn't pick S from it: τ and Σ_tail aren't known until phase 2. Choosing slots from a
   sampled τ is the obvious next step and isn't implemented.
 - Only `ORDER BY agg DESC` with COUNT, SUM or MAX, one aggregate, `i64`
   values, no NULLs, no spilling.

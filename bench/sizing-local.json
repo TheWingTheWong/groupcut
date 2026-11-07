@@ -1,0 +1,17 @@
+{"synthetic": {
+  "0.0": {"sigma": 20000000, "tail": 19999810, "tau": 18, "sigma_over_tau": 1111111.1, "tail_over_tau": 1111100.6},
+  "0.5": {"sigma": 20000000, "tail": 19975128, "tau": 1617, "sigma_over_tau": 12368.6, "tail_over_tau": 12353.2},
+  "0.8": {"sigma": 20000000, "tail": 19288164, "tau": 31658, "sigma_over_tau": 631.8, "tail_over_tau": 609.3},
+  "1.0": {"sigma": 20000000, "tail": 16285903, "tau": 126991, "sigma_over_tau": 157.5, "tail_over_tau": 128.2},
+  "1.2": {"sigma": 20000000, "tail": 10780379, "tau": 235599, "sigma_over_tau": 84.9, "tail_over_tau": 45.8},
+  "1.5": {"sigma": 20000000, "tail": 4717202, "tau": 242182, "sigma_over_tau": 82.6, "tail_over_tau": 19.5}
+},
+"dominant": {"sigma": 10201000, "tail": 200100, "tau": 100, "sigma_over_tau": 102010.0, "tail_over_tau": 2001.0, "runs": [
+  {"partitions": 256, "slots": 1, "partitions_merged": 256, "skipped": 0.0000},
+  {"partitions": 256, "slots": 4, "partitions_merged": 256, "skipped": 0.0000},
+  {"partitions": 256, "slots": 8, "partitions_merged": 252, "skipped": 0.0147},
+  {"partitions": 256, "slots": 16, "partitions_merged": 9, "skipped": 0.9638},
+  {"partitions": 1024, "slots": 16, "partitions_merged": 10, "skipped": 0.9892},
+  {"partitions": 4096, "slots": 16, "partitions_merged": 11, "skipped": 0.9962},
+  {"partitions": 256, "slots": 256, "partitions_merged": 10, "skipped": 0.9595}
+]}}

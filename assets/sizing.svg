@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="860" height="430" viewBox="0 0 860 430" font-family='system-ui, -apple-system, "Segoe UI", sans-serif'>
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="440" viewBox="0 0 860 440" font-family='system-ui, -apple-system, "Segoe UI", sans-serif'>
 <rect width="100%" height="100%" rx="8" fill="#fcfcfb"/>
-<text x="24.0" y="32.0" font-size="16" fill="#0b0b0b" text-anchor="start" font-weight="600" >The sketch prunes once there are more counters than Σ/τ (runner 1)</text>
-<text x="24.0" y="54.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >43 configurations on three datasets. x: partitions × slots divided by (total of the aggregate / k-th value). Hover a point for its setup.</text>
+<text x="24.0" y="32.0" font-size="16" fill="#0b0b0b" text-anchor="start" font-weight="600" >Partition pruning starts once there are more counters than Σ_tail/τ</text>
+<text x="24.0" y="54.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >45 distinct configurations, four datasets. Σ_tail = total of the aggregate minus the top k; τ = k-th value. Hover a point.</text>
 <line x1="80.0" y1="346.0" x2="700.0" y2="346.0" stroke="#e1e0d9" stroke-width="1"/>
 <text x="72.0" y="350.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" >0%</text>
 <line x1="80.0" y1="283.5" x2="700.0" y2="283.5" stroke="#e1e0d9" stroke-width="1"/>
@@ -21,56 +21,60 @@
 <text x="700.0" y="362.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >100</text>
 <line x1="80.0" y1="346.0" x2="700.0" y2="346.0" stroke="#c3c2b7" stroke-width="1"/>
 <line x1="493.3" y1="90.0" x2="493.3" y2="346.0" stroke="#c3c2b7" stroke-width="1.5"/>
-<text x="499.3" y="306.0" font-size="11" fill="#52514e" text-anchor="start" font-weight="400" >counters = Σ/τ</text>
-<text x="390.0" y="382.0" font-size="11.5" fill="#52514e" text-anchor="middle" font-weight="400" >(partitions × slots) / (Σ/τ), log scale</text>
-<text x="80.0" y="82.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >partials skipped by partition pruning</text>
-<circle cx="117.5" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0: 256 x 1: ratio 0.00, 0.0% skipped</title></circle>
-<circle cx="241.9" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0: 256 x 16: ratio 0.00, 0.0% skipped</title></circle>
-<circle cx="319.3" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0.5: 256 x 1: ratio 0.02, 0.0% skipped</title></circle>
-<circle cx="443.7" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0.5: 256 x 16: ratio 0.33, 0.0% skipped</title></circle>
-<circle cx="452.8" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0.8: 256 x 1: ratio 0.41, 0.0% skipped</title></circle>
-<circle cx="577.2" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0.8: 256 x 16: ratio 6.48, 95.5% skipped</title></circle>
-<circle cx="515.1" cy="113.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1: 256 x 1: ratio 1.63, 93.1% skipped</title></circle>
-<circle cx="639.6" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1: 256 x 16: ratio 26.01, 95.5% skipped</title></circle>
-<circle cx="542.9" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.2: 256 x 1: ratio 3.02, 95.5% skipped</title></circle>
-<circle cx="667.3" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.2: 256 x 16: ratio 48.24, 95.5% skipped</title></circle>
-<circle cx="544.1" cy="107.2" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.5: 256 x 1: ratio 3.10, 95.5% skipped</title></circle>
-<circle cx="668.5" cy="107.2" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.5: 256 x 16: ratio 49.59, 95.5% skipped</title></circle>
-<circle cx="452.8" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0.8: 256 x 1: ratio 0.41, 0.0% skipped</title></circle>
-<circle cx="483.9" cy="345.1" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0.8: 256 x 2: ratio 0.81, 0.3% skipped</title></circle>
-<circle cx="515.0" cy="123.4" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0.8: 256 x 4: ratio 1.62, 89.1% skipped</title></circle>
-<circle cx="546.1" cy="108.2" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0.8: 256 x 8: ratio 3.24, 95.1% skipped</title></circle>
-<circle cx="577.2" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0.8: 256 x 16: ratio 6.48, 95.5% skipped</title></circle>
-<circle cx="608.3" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0.8: 256 x 32: ratio 12.97, 95.5% skipped</title></circle>
-<circle cx="639.4" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0.8: 256 x 64: ratio 25.93, 95.5% skipped</title></circle>
-<circle cx="670.5" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0.8: 256 x 128: ratio 51.86, 95.5% skipped</title></circle>
-<circle cx="700.0" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=0.8: 256 x 256: ratio 103.73, 95.5% skipped</title></circle>
-<circle cx="390.7" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.0: 16 x 1: ratio 0.10, 0.0% skipped</title></circle>
-<circle cx="515.1" cy="267.8" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.0: 16 x 16: ratio 1.63, 31.3% skipped</title></circle>
-<circle cx="452.9" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.0: 64 x 1: ratio 0.41, 0.0% skipped</title></circle>
-<circle cx="577.3" cy="135.1" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.0: 64 x 16: ratio 6.50, 84.4% skipped</title></circle>
-<circle cx="515.1" cy="113.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.0: 256 x 1: ratio 1.63, 93.1% skipped</title></circle>
-<circle cx="639.6" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.0: 256 x 16: ratio 26.01, 95.5% skipped</title></circle>
-<circle cx="577.3" cy="99.4" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.0: 1024 x 1: ratio 6.50, 98.7% skipped</title></circle>
-<circle cx="700.0" cy="99.1" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.0: 1024 x 16: ratio 104.03, 98.8% skipped</title></circle>
-<circle cx="639.6" cy="97.1" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.0: 4096 x 1: ratio 26.01, 99.6% skipped</title></circle>
-<circle cx="700.0" cy="97.1" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf, s=1.0: 4096 x 16: ratio 416.10, 99.6% skipped</title></circle>
-<circle cx="420.4" cy="346.0" r="5" fill="#2a78d6" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>Wikipedia pageviews, wiki: 256 x 1: ratio 0.20, 0.0% skipped</title></circle>
-<circle cx="544.8" cy="109.7" r="5" fill="#2a78d6" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>Wikipedia pageviews, wiki: 256 x 16: ratio 3.15, 94.5% skipped</title></circle>
-<circle cx="482.6" cy="346.0" r="5" fill="#2a78d6" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>Wikipedia pageviews, wiki: 1024 x 1: ratio 0.79, 0.0% skipped</title></circle>
-<circle cx="607.1" cy="98.9" r="5" fill="#2a78d6" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>Wikipedia pageviews, wiki: 1024 x 16: ratio 12.60, 98.8% skipped</title></circle>
-<circle cx="544.8" cy="97.0" r="5" fill="#2a78d6" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>Wikipedia pageviews, wiki: 4096 x 1: ratio 3.15, 99.6% skipped</title></circle>
-<circle cx="669.3" cy="96.8" r="5" fill="#2a78d6" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>Wikipedia pageviews, wiki: 4096 x 16: ratio 50.42, 99.7% skipped</title></circle>
-<circle cx="334.3" cy="346.0" r="5" fill="#eb6834" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>ClickBench Q16, Q16: 256 x 1: ratio 0.03, 0.0% skipped</title></circle>
-<circle cx="458.7" cy="346.0" r="5" fill="#eb6834" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>ClickBench Q16, Q16: 256 x 16: ratio 0.46, 0.0% skipped</title></circle>
-<circle cx="334.3" cy="346.0" r="5" fill="#eb6834" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>ClickBench Q16, Q16: 256 x 1: ratio 0.03, 0.0% skipped</title></circle>
-<circle cx="583.2" cy="109.7" r="5" fill="#eb6834" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>ClickBench Q16, Q16: 256 x 256: ratio 7.40, 94.5% skipped</title></circle>
-<circle cx="458.7" cy="346.0" r="5" fill="#eb6834" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>ClickBench Q16, Q16: 4096 x 1: ratio 0.46, 0.0% skipped</title></circle>
-<circle cx="583.2" cy="96.9" r="5" fill="#eb6834" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>ClickBench Q16, Q16: 4096 x 16: ratio 7.40, 99.6% skipped</title></circle>
-<circle cx="86" cy="404" r="5" fill="#1baf7a"/>
-<text x="96.0" y="408.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >synthetic Zipf</text>
-<circle cx="227.2" cy="404" r="5" fill="#2a78d6"/>
-<text x="237.2" y="408.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >Wikipedia pageviews</text>
-<circle cx="402.4" cy="404" r="5" fill="#eb6834"/>
-<text x="412.4" y="408.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >ClickBench Q16</text>
+<text x="499.3" y="306.0" font-size="11" fill="#52514e" text-anchor="start" font-weight="400" >counters = Σ_tail/τ</text>
+<text x="390.0" y="382.0" font-size="11.5" fill="#52514e" text-anchor="middle" font-weight="400" >(partitions × slots) / (Σ_tail/τ), log scale</text>
+<text x="80.0" y="82.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >partials skipped by partition pruning (runner 1)</text>
+<circle cx="334.5" cy="346.0" r="5" fill="#eb6834" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>ClickBench Q16, 256 x 1: ratio 0.03, 0.0% skipped</title></circle>
+<circle cx="458.9" cy="346.0" r="5" fill="#eb6834" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>ClickBench Q16, 256 x 16: ratio 0.46, 0.0% skipped</title></circle>
+<circle cx="583.3" cy="109.7" r="5" fill="#eb6834" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>ClickBench Q16, 256 x 256: ratio 7.43, 94.5% skipped</title></circle>
+<circle cx="458.9" cy="346.0" r="5" fill="#eb6834" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>ClickBench Q16, 4096 x 1: ratio 0.46, 0.0% skipped</title></circle>
+<circle cx="583.3" cy="96.9" r="5" fill="#eb6834" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>ClickBench Q16, 4096 x 16: ratio 7.43, 99.6% skipped</title></circle>
+<circle cx="421.3" cy="346.0" r="5" fill="#2a78d6" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>Wikipedia pageviews, 256 x 1: ratio 0.20, 0.0% skipped</title></circle>
+<circle cx="545.7" cy="109.7" r="5" fill="#2a78d6" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>Wikipedia pageviews, 256 x 16: ratio 3.21, 94.5% skipped</title></circle>
+<circle cx="483.5" cy="346.0" r="5" fill="#2a78d6" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>Wikipedia pageviews, 1024 x 1: ratio 0.80, 0.0% skipped</title></circle>
+<circle cx="607.9" cy="98.9" r="5" fill="#2a78d6" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>Wikipedia pageviews, 1024 x 16: ratio 12.84, 98.8% skipped</title></circle>
+<circle cx="545.7" cy="97.0" r="5" fill="#2a78d6" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>Wikipedia pageviews, 4096 x 1: ratio 3.21, 99.6% skipped</title></circle>
+<circle cx="670.1" cy="96.8" r="5" fill="#2a78d6" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>Wikipedia pageviews, 4096 x 16: ratio 51.38, 99.7% skipped</title></circle>
+<rect x="396.1" y="341.0" width="10" height="10" fill="#52514e" stroke="#fcfcfb" stroke-width="2" transform="rotate(45 401.1 346.0)"><title>one dominant key, 256 x 1: ratio 0.13, 0.0% skipped</title></rect>
+<rect x="458.3" y="341.0" width="10" height="10" fill="#52514e" stroke="#fcfcfb" stroke-width="2" transform="rotate(45 463.3 346.0)"><title>one dominant key, 256 x 4: ratio 0.51, 0.0% skipped</title></rect>
+<rect x="489.4" y="337.3" width="10" height="10" fill="#52514e" stroke="#fcfcfb" stroke-width="2" transform="rotate(45 494.4 342.3)"><title>one dominant key, 256 x 8: ratio 1.02, 1.5% skipped</title></rect>
+<rect x="520.5" y="100.1" width="10" height="10" fill="#52514e" stroke="#fcfcfb" stroke-width="2" transform="rotate(45 525.5 105.1)"><title>one dominant key, 256 x 16: ratio 2.05, 96.4% skipped</title></rect>
+<rect x="644.9" y="101.1" width="10" height="10" fill="#52514e" stroke="#fcfcfb" stroke-width="2" transform="rotate(45 649.9 106.1)"><title>one dominant key, 256 x 256: ratio 32.75, 96.0% skipped</title></rect>
+<rect x="582.7" y="93.7" width="10" height="10" fill="#52514e" stroke="#fcfcfb" stroke-width="2" transform="rotate(45 587.7 98.7)"><title>one dominant key, 1024 x 16: ratio 8.19, 98.9% skipped</title></rect>
+<rect x="644.9" y="91.9" width="10" height="10" fill="#52514e" stroke="#fcfcfb" stroke-width="2" transform="rotate(45 649.9 96.9)"><title>one dominant key, 4096 x 16: ratio 32.75, 99.6% skipped</title></rect>
+<circle cx="117.5" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=0.0, 256 x 1: ratio 0.00, 0.0% skipped</title></circle>
+<circle cx="241.9" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=0.0, 256 x 16: ratio 0.00, 0.0% skipped</title></circle>
+<circle cx="319.4" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=0.5, 256 x 1: ratio 0.02, 0.0% skipped</title></circle>
+<circle cx="443.8" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=0.5, 256 x 16: ratio 0.33, 0.0% skipped</title></circle>
+<circle cx="454.4" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=0.8, 256 x 1: ratio 0.42, 0.0% skipped</title></circle>
+<circle cx="485.5" cy="345.1" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=0.8, 256 x 2: ratio 0.84, 0.3% skipped</title></circle>
+<circle cx="516.6" cy="123.4" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=0.8, 256 x 4: ratio 1.68, 89.1% skipped</title></circle>
+<circle cx="547.7" cy="108.2" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=0.8, 256 x 8: ratio 3.36, 95.1% skipped</title></circle>
+<circle cx="578.8" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=0.8, 256 x 16: ratio 6.72, 95.5% skipped</title></circle>
+<circle cx="610.0" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=0.8, 256 x 32: ratio 13.44, 95.5% skipped</title></circle>
+<circle cx="641.1" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=0.8, 256 x 64: ratio 26.89, 95.5% skipped</title></circle>
+<circle cx="672.2" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=0.8, 256 x 128: ratio 53.78, 95.5% skipped</title></circle>
+<circle cx="700.0" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=0.8, 256 x 256: ratio 107.56, 95.5% skipped</title></circle>
+<circle cx="399.9" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.0, 16 x 1: ratio 0.12, 0.0% skipped</title></circle>
+<circle cx="524.4" cy="267.8" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.0, 16 x 16: ratio 2.00, 31.3% skipped</title></circle>
+<circle cx="462.2" cy="346.0" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.0, 64 x 1: ratio 0.50, 0.0% skipped</title></circle>
+<circle cx="586.6" cy="135.1" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.0, 64 x 16: ratio 7.99, 84.4% skipped</title></circle>
+<circle cx="524.4" cy="113.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.0, 256 x 1: ratio 2.00, 93.1% skipped</title></circle>
+<circle cx="648.8" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.0, 256 x 16: ratio 31.95, 95.5% skipped</title></circle>
+<circle cx="586.6" cy="99.4" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.0, 1024 x 1: ratio 7.99, 98.7% skipped</title></circle>
+<circle cx="700.0" cy="99.1" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.0, 1024 x 16: ratio 127.80, 98.8% skipped</title></circle>
+<circle cx="648.8" cy="97.1" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.0, 4096 x 1: ratio 31.95, 99.6% skipped</title></circle>
+<circle cx="700.0" cy="97.1" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.0, 4096 x 16: ratio 511.20, 99.6% skipped</title></circle>
+<circle cx="570.6" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.2, 256 x 1: ratio 5.59, 95.5% skipped</title></circle>
+<circle cx="695.0" cy="107.3" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.2, 256 x 16: ratio 89.43, 95.5% skipped</title></circle>
+<circle cx="608.9" cy="107.2" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.5, 256 x 1: ratio 13.13, 95.5% skipped</title></circle>
+<circle cx="700.0" cy="107.2" r="5" fill="#1baf7a" fill-opacity="0.85" stroke="#fcfcfb" stroke-width="2"><title>synthetic Zipf s=1.5, 256 x 16: ratio 210.05, 95.5% skipped</title></circle>
+<circle cx="86" cy="414" r="5" fill="#1baf7a"/>
+<text x="96.0" y="418.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >synthetic Zipf</text>
+<circle cx="227.2" cy="414" r="5" fill="#2a78d6"/>
+<text x="237.2" y="418.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >Wikipedia pageviews</text>
+<circle cx="402.4" cy="414" r="5" fill="#eb6834"/>
+<text x="412.4" y="418.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >ClickBench Q16</text>
+<rect x="538.5999999999999" y="409" width="10" height="10" fill="#52514e" transform="rotate(45 543.5999999999999 414)"/>
+<text x="553.6" y="418.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >one dominant key</text>
 </svg>

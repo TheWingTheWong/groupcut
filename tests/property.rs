@@ -78,6 +78,7 @@ fn every_configuration_matches_the_reference() {
                     preagg_bits: 4 + rng.below(10) as u32,
                     // 64..4096 rows, so phase 1 really runs on several threads.
                     morsel_rows: 64 << rng.below(7),
+                    adaptive_preagg: rng.below(2) == 1,
                     strategy: random_strategy(&mut rng),
                 };
                 let (got, stats) = top_k(&keys, &vals, agg, k, &cfg);
@@ -132,6 +133,7 @@ fn ties_are_broken_by_key_and_never_pruned_away() {
                 partition_bits: 6,
                 preagg_bits: 8,
                 morsel_rows: 256,
+                adaptive_preagg: true,
                 strategy: Strategy::Prune { slot_bits, filter },
             };
             let (got, _) = top_k(&keys, &vals, AggKind::Count, 25, &cfg);
@@ -198,6 +200,7 @@ fn negative_sums_do_not_break_the_bound() {
                     partition_bits: 1,
                     preagg_bits,
                     morsel_rows: 256,
+                    adaptive_preagg: true,
                     strategy: Strategy::Prune { slot_bits, filter },
                 };
                 assert_eq!(
@@ -226,6 +229,7 @@ fn partitions_whose_bound_equals_the_threshold_are_merged() {
                 partition_bits: 8,
                 preagg_bits: 8,
                 morsel_rows: 256,
+                adaptive_preagg: true,
                 strategy: Strategy::Prune { slot_bits, filter },
             };
             assert_eq!(top_k(&keys, &vals, AggKind::Count, 25, &cfg).0, expect);
@@ -245,6 +249,7 @@ fn sum_overflow_is_an_error_not_a_wrong_answer() {
         partition_bits: 2,
         preagg_bits: 4,
         morsel_rows: 256,
+        adaptive_preagg: true,
         strategy: Strategy::Prune {
             slot_bits: 2,
             filter: true,
@@ -265,6 +270,7 @@ fn skewed_data_actually_prunes() {
         partition_bits: 8,
         preagg_bits: 12,
         morsel_rows: 256,
+        adaptive_preagg: true,
         strategy: Strategy::Prune {
             slot_bits: 4,
             filter: true,
@@ -291,6 +297,7 @@ fn uniform_data_prunes_nothing_but_stays_exact() {
         partition_bits: 8,
         preagg_bits: 10,
         morsel_rows: 256,
+        adaptive_preagg: true,
         strategy: Strategy::Prune {
             slot_bits: 4,
             filter: true,
@@ -318,6 +325,7 @@ fn results_do_not_depend_on_thread_count() {
                 partition_bits: 5,
                 preagg_bits: 9,
                 morsel_rows: 256,
+                adaptive_preagg: true,
                 strategy: Strategy::Prune {
                     slot_bits: 3,
                     filter: true,
@@ -326,6 +334,47 @@ fn results_do_not_depend_on_thread_count() {
             let got = top_k(&keys, &vals, agg, 50, &cfg).0;
             let prev = answers.entry(agg).or_insert_with(|| got.clone());
             assert_eq!(&got, prev, "{agg:?} threads={threads}");
+        }
+    }
+}
+
+#[test]
+fn bypassing_preaggregation_stays_exact() {
+    // First half: every key distinct, so the tiny pre-aggregation table never
+    // reduces anything and threads switch to scattering rows directly.
+    // Second half: heavy repeats of a few keys, mixed-sign values.
+    let mut rng = Rng::new(23);
+    let mut keys: Vec<u64> = (0..40_000u64)
+        .map(|i| rank_key(i as usize + 1000))
+        .collect();
+    keys.extend((0..40_000).map(|_| rank_key(rng.below(1000) as usize)));
+    let vals: Vec<i64> = (0..keys.len())
+        .map(|_| rng.below(200) as i64 - 60)
+        .collect();
+    for agg in AGGS {
+        let expect = reference::top_k(&keys, &vals, agg, 20);
+        for strategy in [
+            Strategy::Full,
+            Strategy::Prune {
+                slot_bits: 4,
+                filter: true,
+            },
+        ] {
+            for threads in [1, 4] {
+                let cfg = Config {
+                    threads,
+                    partition_bits: 6,
+                    preagg_bits: 5,
+                    morsel_rows: 512,
+                    adaptive_preagg: true,
+                    strategy,
+                };
+                assert_eq!(
+                    top_k(&keys, &vals, agg, 20, &cfg).0,
+                    expect,
+                    "{agg:?} {strategy:?} {threads}"
+                );
+            }
         }
     }
 }

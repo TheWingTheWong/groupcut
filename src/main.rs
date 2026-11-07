@@ -14,7 +14,7 @@ USAGE:
   groupcut bench [--rows N] [--groups N] [--reps R] [--threads T] [--out FILE]
                  [--sections skew,slots,k,partitions,overhead]
   groupcut wiki  [--by page|title] [--agg sum|count|max] [--k K] [--reps R]
-                 [--partition-bits B] [--check] [--json FILE] FILES...
+                 [--partition-bits B] [--adaptive 0|1] [--check] [--json FILE] FILES...
 
 demo   one synthetic Zipf workload, every strategy, checked against a
        naive HashMap + sort reference
@@ -229,6 +229,15 @@ fn check_same(ms: &[Measured], expect: &[(u64, i64)]) {
 }
 
 fn configs(threads: usize, partition_bits: u32, strategies: &[Strategy]) -> Vec<Config> {
+    configs_with(threads, partition_bits, true, strategies)
+}
+
+fn configs_with(
+    threads: usize,
+    partition_bits: u32,
+    adaptive_preagg: bool,
+    strategies: &[Strategy],
+) -> Vec<Config> {
     strategies
         .iter()
         .map(|&strategy| Config {
@@ -236,6 +245,7 @@ fn configs(threads: usize, partition_bits: u32, strategies: &[Strategy]) -> Vec<
             partition_bits,
             preagg_bits: 14,
             morsel_rows: 1 << 16,
+            adaptive_preagg,
             strategy,
         })
         .collect()
@@ -515,6 +525,7 @@ fn wiki_cmd(a: &Args) {
     let reps: usize = a.get("reps", 5);
     let threads: usize = a.get("threads", default_threads());
     let partition_bits: u32 = a.get("partition-bits", 8);
+    let adaptive = a.get::<u8>("adaptive", 1) != 0;
     let check = a.rest.iter().any(|r| r == "--check");
     let paths: Vec<PathBuf> = a
         .rest
@@ -551,7 +562,7 @@ fn wiki_cmd(a: &Args) {
         &vals,
         agg,
         k,
-        &configs(threads, partition_bits, &STRATEGIES),
+        &configs_with(threads, partition_bits, adaptive, &STRATEGIES),
         reps,
     );
     check_same(&m, &m[0].result.clone());

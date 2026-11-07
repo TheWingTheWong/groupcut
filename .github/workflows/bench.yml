@@ -1,5 +1,6 @@
 # Reproduce the README numbers on a GitHub-hosted runner. Manual trigger only:
-# it downloads ~300 MB of Wikipedia pageview dumps and runs for ~10 minutes.
+# it downloads ~300 MB of Wikipedia pageview dumps and runs for ~10 minutes,
+# three times in parallel on separate runners to show machine-to-machine spread.
 name: bench
 
 on:
@@ -7,6 +8,10 @@ on:
 
 jobs:
   bench:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [1, 2, 3]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -16,6 +21,8 @@ jobs:
       - run: scripts/fetch-wiki.sh 20261101 12 6
       - name: Wikipedia pageviews, 6 hours, 256 partitions, checked against the reference
         run: ./target/release/groupcut wiki --reps 7 --check --json bench/wiki-gha.json data/*.gz | tee bench/wiki-gha.txt
+      - name: Same, with pre-aggregation always on (the older, weaker baseline)
+        run: ./target/release/groupcut wiki --reps 7 --adaptive 0 --json bench/wiki-gha-noadapt.json data/*.gz | tee bench/wiki-gha-noadapt.txt
       - name: Same, 1024 and 4096 partitions
         run: |
           ./target/release/groupcut wiki --reps 7 --partition-bits 10 --json bench/wiki-gha-p10.json data/*.gz | tee bench/wiki-gha-p10.txt
@@ -33,5 +40,5 @@ jobs:
           for f in bench/*-gha*.txt; do echo "## $f"; echo '```'; cat "$f"; echo '```'; done >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v5
         with:
-          name: bench-results
+          name: bench-results-${{ matrix.runner }}
           path: bench/*-gha*

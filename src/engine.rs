@@ -88,6 +88,11 @@ pub struct Config {
     /// Rows per morsel in phase 1 (64K by default; tests use small morsels so
     /// that small inputs are still spread over several threads).
     pub morsel_rows: usize,
+    /// Skip the pre-aggregation table while it isn't reducing anything: if a
+    /// flush emits more than 90% as many partials as rows went in, the thread
+    /// scatters the next 16 morsels straight into the partition buffers, then
+    /// probes the table again with one morsel.
+    pub adaptive_preagg: bool,
     pub strategy: Strategy,
 }
 
@@ -100,6 +105,7 @@ impl Default for Config {
             partition_bits: 8,
             preagg_bits: 14,
             morsel_rows: 1 << 16,
+            adaptive_preagg: true,
             strategy: Strategy::Prune {
                 slot_bits: 4,
                 filter: true,
@@ -215,16 +221,33 @@ fn run<A: AggOp>(keys: &[u64], vals: &[i64], k: usize, cfg: &Config) -> (Vec<(u6
                         },
                     };
                     let mut table = AggTable::fixed(preagg_cap);
+                    // Rows fed to the table since its last flush, and how many
+                    // morsels to scatter directly before probing it again.
+                    let mut rows_in = 0usize;
+                    let mut bypass_left = 0u32;
                     loop {
                         let lo = cursor.fetch_add(morsel, Relaxed);
                         if lo >= keys.len() {
                             break;
                         }
                         let hi = (lo + morsel).min(keys.len());
+                        if bypass_left > 0 {
+                            bypass_left -= 1;
+                            for (&key, &v) in keys[lo..hi].iter().zip(&vals[lo..hi]) {
+                                local.push::<A>(key, mix(key), A::init(v), layout, prune);
+                            }
+                            continue;
+                        }
                         for (&key, &v) in keys[lo..hi].iter().zip(&vals[lo..hi]) {
                             table.upsert(key, mix(key), A::init(v), |a| A::update(a, v));
+                            rows_in += 1;
                             if table.is_full() {
+                                let out = table.len();
                                 local.flush::<A>(&mut table, layout, prune);
+                                if cfg.adaptive_preagg && out * 10 > rows_in * 9 {
+                                    bypass_left = 16;
+                                }
+                                rows_in = 0;
                             }
                         }
                     }
@@ -405,18 +428,23 @@ struct Local {
 }
 
 impl Local {
+    /// Append one partial to its partition (and its slot counter).
+    #[inline(always)]
+    fn push<A: AggOp>(&mut self, key: u64, h: u64, partial: i64, layout: Layout, sketching: bool) {
+        let p = layout.partition(h);
+        unsafe { self.bufs.get_unchecked_mut(p) }.push((key, partial));
+        if sketching {
+            let c = unsafe {
+                self.sketch
+                    .get_unchecked_mut(p * layout.slots() + layout.slot(h))
+            };
+            A::bound_combine(c, A::bound_contrib(partial));
+        }
+    }
+
     #[inline(never)]
     fn flush<A: AggOp>(&mut self, table: &mut AggTable, layout: Layout, sketching: bool) {
-        let slots = layout.slots();
-        table.for_each(|key, partial| {
-            let h = mix(key);
-            let p = layout.partition(h);
-            unsafe { self.bufs.get_unchecked_mut(p) }.push((key, partial));
-            if sketching {
-                let c = unsafe { self.sketch.get_unchecked_mut(p * slots + layout.slot(h)) };
-                A::bound_combine(c, A::bound_contrib(partial));
-            }
-        });
+        table.for_each(|key, partial| self.push::<A>(key, mix(key), partial, layout, sketching));
         table.clear();
     }
 }

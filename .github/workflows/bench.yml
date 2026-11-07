@@ -1,0 +1,30 @@
+# Reproduce the README numbers on a GitHub-hosted runner. Manual trigger only:
+# it downloads ~270 MB of Wikipedia pageview dumps and runs for ~15 minutes.
+name: bench
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo build --release
+      - run: scripts/fetch-wiki.sh 20261101 12 6
+      - name: Wikipedia pageviews, 6 hours
+        run: |
+          ./target/release/groupcut wiki --reps 7 --json bench/wiki-gha.json data/*.gz | tee bench/wiki-gha.txt
+      - name: Synthetic sweeps
+        run: |
+          ./target/release/groupcut bench --reps 5 --out bench/results-gha.json | tee bench/results-gha.txt
+      - name: Summary
+        run: |
+          { echo '## Wikipedia'; echo '```'; cat bench/wiki-gha.txt; echo '```';
+            echo '## Synthetic'; echo '```'; cat bench/results-gha.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bench-results
+          path: bench/*-gha.*

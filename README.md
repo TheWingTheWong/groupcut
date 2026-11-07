@@ -12,7 +12,8 @@ cannot contain one of the top k. Answers are exact.
 counters (partitions × slots) exceeds **Σ_tail/τ**. Here Σ_tail is the total of
 the aggregate minus the top k's share, and τ is the k-th best value. Below
 that ratio it prunes almost nothing. Across 45 distinct configurations on four
-datasets (each checked on three CI runners):
+datasets (three of them measured on three CI runners, the dominant-key one
+locally):
 
 - every configuration below a ratio of 1 skipped at most 0.35% of the merge;
 - one at 1.02 skipped 1.5%;
@@ -21,7 +22,7 @@ datasets (each checked on three CI runners):
 
 ![Partials skipped vs counters relative to Σ_tail/τ](assets/sizing.svg)
 
-Two of those datasets show both sides of the rule:
+The two real datasets fall on opposite sides of it at the default setting:
 
 - **Wikipedia pageviews** (6 hours, 34.6M rows, Σ_tail/τ ≈ 1,280). The default
   256 partitions × 16 slots skip 242 of 256 partitions. The query runs

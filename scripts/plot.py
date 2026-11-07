@@ -214,7 +214,7 @@ def skew_chart(res):
     svg.text(
         24, 54,
         f"{res['rows'] / 1e6:.0f}M rows over {res['groups'] / 1e6:.0f}M keys, Zipf exponent s (0 = uniform), "
-        f"{res['machine']['threads']} threads, median of {res['reps']}. Gray line: 1.0 = full merge.",
+        f"{res['machine']['threads']} threads, {MACHINE.get(res['machine']['os'], res['machine']['os'])}, median of {res['reps']}. Gray line: 1.0 = full merge.",
         12.5, INK2,
     )
     pw, ph = 330, 230
@@ -267,7 +267,7 @@ def slots_chart(res):
     W, H = 900, 420
     svg = Svg(W, H)
     svg.text(24, 32, f"More slots per partition, tighter bounds (synthetic, Zipf s = {res.get('slots_s', 1.0)})", 16, INK, weight=600)
-    svg.text(24, 54, "1 slot = the partition total. Left: partitions that still had to be merged. Right: share of partials never inserted.", 12.5, INK2)
+    svg.text(24, 54, f"1 slot = the partition total. {MACHINE.get(res['machine']['os'], res['machine']['os'])}. Left: partitions still merged. Right: partials never inserted.", 12.5, INK2)
     pw, ph = 330, 230
     total = base["partitions"]
     s_merged = [("slots", S2, [pts[False][x]["partitions_merged"] for x in xs]), ("slots + filter", S1, [pts[True][x]["partitions_merged"] for x in xs])]

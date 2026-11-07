@@ -3,9 +3,10 @@
 On six hours of Wikipedia pageviews (34.6M rows, 18.3M distinct pages), the
 obvious way to prune a top-10 `GROUP BY` (skip any hash partition whose total
 cannot reach the top 10) skips **0 of 256** partitions. Splitting each
-partition's total into 16 hashed slot counters skips **242 of 256**. The merge
-phase drops from 1.21 s to 68 ms (18x) and the query from 3.0 s to 2.1 s. The
-answer is identical; the pruning is exact, not approximate.
+partition's total into 16 hashed slot counters skips **242 of 256**. On a
+4-vCPU GitHub Actions runner the merge phase drops from 328 ms to 32 ms (10x)
+and the whole query from 681 ms to 442 ms (1.54x). The answer is identical;
+the pruning is exact, not approximate.
 
 ![Wikipedia benchmark: full merge vs partition totals vs slot sketches](assets/wiki.svg)
 
@@ -21,10 +22,10 @@ databases use, plus the top-k pruning described in Pivot's post
 [*Can GROUP BY still be optimized after all these years?*](https://pivotlake.io/blog/know-your-limit-faster-top-k-aggregation/)
 (Oct 2026, on the HN front page this week), and measures it on real and
 synthetic data. The post reports one end-to-end number (1.6x on ClickBench
-Q16) and no ablation of the slot refinement. This repo isolates that mechanism, extends it
-to SUM with negative values and to MAX, adds a per-slot filter inside the
-partitions that still have to be merged, and checks every answer against a
-naive reference.
+Q16) and no ablation of the slot refinement. This repo isolates that
+mechanism, extends it to SUM with negative values and to MAX, adds a per-slot
+filter inside the partitions that still have to be merged, and checks every
+answer against a naive reference.
 
 ## Quickstart
 
@@ -38,8 +39,8 @@ cargo run --release -- bench               # the sweeps behind the charts (~15 m
 python3 scripts/plot.py                    # re-render assets/*.svg from bench/*.json
 ```
 
-Real output of `groupcut wiki --threads 4 --reps 7 data/*.gz` on an 8 GB M2
-MacBook Air (`bench/wiki-m2.txt`):
+Real output of `groupcut wiki --reps 7 data/*.gz` on that runner
+(`bench/wiki-gha.txt`, from `.github/workflows/bench.yml`):
 
 ```
 SELECT domain_code, page_title, SUM(count_views) FROM pageviews GROUP BY domain_code, page_title ORDER BY 2 DESC LIMIT 10
@@ -56,15 +57,20 @@ SELECT domain_code, page_title, SUM(count_views) FROM pageviews GROUP BY domain_
   10.      81265  ja.m メインページ
 
   strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
-  full merge                3022.9    1789.9       0.0    1212.2    1.00x    1.00x  256/256        0.0%
-  partition totals          3525.3    2147.5       0.0    1233.8    0.86x    0.98x  256/256        0.0%
-  slots (16)                2140.1    2064.2       0.1      67.5    1.41x   17.95x   14/256       94.5%
-  slots (16) + filter       2120.0    2047.1       0.1      70.5    1.43x   17.20x   14/256       96.0%
+  full merge                 681.4     321.6       0.0     328.2    1.00x    1.00x  256/256        0.0%
+  partition totals           729.3     366.7       0.0     320.5    0.93x    1.02x  256/256        0.0%
+  slots (16)                 454.0     376.0       0.0      36.0    1.50x    9.13x   14/256       94.5%
+  slots (16) + filter        442.2     362.4       0.0      32.1    1.54x   10.23x   14/256       96.0%
   18341211 distinct pages, 34558052 partial aggregates across 256 partitions; answers identical across strategies
 ```
 
 `skipped` is the share of phase-1 output that was never inserted into a merge
-table. Times are medians of 7 runs.
+table. Times are medians of 7 runs. Phase 1 (`local`) is 13-17% slower with a
+sketch: here every row becomes a partial, and each partial costs one extra
+counter update. The merge saving (296 ms) is more than six times that cost
+(41-54 ms). On an 8 GB M2 MacBook Air (`bench/wiki-m2.txt`), the same query
+goes from 3.02 s to 2.12 s (1.43x), with the merge phase going from 1212 ms to
+70 ms (17x).
 
 ## The idea
 
@@ -131,70 +137,78 @@ All numbers come from the scripts in this repo. `bench/*.txt` and
 `bench/*.json` are the captured outputs, and the charts are rendered from the
 JSON.
 
+Unless noted otherwise, numbers below come from the GitHub Actions runner
+(Linux, 4 vCPU; `bench/*-gha.*`). The same sweeps on the M2 are in
+`bench/*-m2.*`: same partition counts, noisier times.
+
 **Skew decides everything.** 20M rows over 4M keys, Zipf exponent s,
-`COUNT(*)`, k = 10, 4 threads (`bench/results-m2.txt`). Each cell gives
+`COUNT(*)`, k = 10, 4 threads (`bench/results-gha.txt`). Each cell gives
 partitions merged · merge-phase speedup · end-to-end speedup, relative to the
 full merge:
 
 | s | full merge | partition totals | slots (16) | slots (16) + filter |
 |---|---|---|---|---|
-| 0 (uniform) | 1278 ms (508 merge) | 256/256 · 0.9x · 0.76x | 256/256 · 0.8x · 0.67x | 256/256 · 1.1x · 0.96x |
-| 0.5 | 1211 ms (395 merge) | 256/256 · 1.0x · 0.96x | 256/256 · 1.0x · 1.08x | 256/256 · 1.0x · 0.96x |
-| **0.8** | 1226 ms (345 merge) | **256/256** · 1.1x · 1.17x | **11/256** · 17.2x · 1.26x | **11/256** · 14.6x · 1.33x |
-| 1.0 | 598 ms (142 merge) | 17/256 · 13.9x · 1.04x | 11/256 · 18.8x · 1.03x | 11/256 · 25.1x · 1.06x |
-| 1.2 | 182 ms (28 merge) | 10/256 · 21.7x · 0.90x | 11/256 · 15.5x · 1.02x | 11/256 · 27.4x · 1.16x |
-| 1.5 | 76 ms (3 merge) | 10/256 · 6.7x · 1.03x | 10/256 · 7.8x · 0.99x | 10/256 · 8.4x · 0.99x |
+| 0 (uniform) | 309 ms (99 merge) | 256/256 · 0.9x · 0.90x | 256/256 · 1.0x · 0.93x | 256/256 · 1.0x · 0.92x |
+| 0.5 | 314 ms (99 merge) | 256/256 · 1.0x · 0.95x | 256/256 · 1.0x · 0.95x | 256/256 · 1.0x · 0.95x |
+| **0.8** | 241 ms (92 merge) | **256/256** · 1.0x · 0.94x | **13/256** · 8.3x · 1.35x | **11/256** · 8.1x · 1.33x |
+| 1.0 | 168 ms (48 merge) | 17/256 · 8.5x · 1.28x | 12/256 · 10.2x · 1.24x | 11/256 · 20.1x · 1.27x |
+| 1.2 | 73 ms (14 merge) | 11/256 · 15.9x · 1.19x | 11/256 · 16.1x · 1.16x | 11/256 · 17.7x · 1.09x |
+| 1.5 | 29 ms (2 merge) | 11/256 · 6.4x · 1.05x | 11/256 · 7.0x · 1.04x | 11/256 · 6.6x · 1.03x |
 
 ![Speedup by skew](assets/skew.svg)
 
 - Below s ≈ 0.5, nothing can be pruned: the top 10 are not far enough above
-  the crowd. No sketch can change that.
+  the crowd. No sketch can change that, and you pay the 3-10% overhead
+  below.
 - At s = 0.8 the data looks like the Wikipedia data: partition totals prune
-  nothing and slots prune 96%.
+  nothing, slots prune 95-96%, and the query is 1.33x faster.
 - From s = 1.0 on, the heavy hitters are heavy enough that partition totals
   work too. Slots add a little; the filter adds a little more.
-- End to end, the gain on synthetic data is small (1.0-1.3x), because
+- End to end, the gain on synthetic data is modest (1.1-1.35x), because
   pre-aggregation collapses repeated keys in phase 1 and leaves less for phase
   2. On the Wikipedia data every (wiki, page) appears once per hourly file, so
-  phase 1 can't reduce anything, the merge is 40% of the query, and pruning it
-  pays 1.4x.
+  phase 1 can't reduce anything, the merge is about half the query, and
+  pruning it pays 1.54x.
 
 **How many slots?** At s = 0.8 the ablation (`assets/slots.svg`) shows a
-cliff, not a slope. 1 or 2 slots merge 255-256 partitions, 4 slots merge 27,
-8 merge 12, and 16-256 slots all merge 11. Past 16 slots the bounds are
+cliff, not a slope. 1 or 2 slots merge 255-256 partitions, 4 slots merge 27-47,
+8 merge 14, and 16-256 slots merge 11-13. Past 16 slots the bounds are
 already below τ and more counters just cost memory (P × slots × 8 bytes per
 thread). 16 is the default.
 
 ![Slot ablation](assets/slots.svg)
 
 **k matters.** At s = 1.0, k = 1 skips 98% of partials and k = 10 skips
-96-97%. k = 100 still skips 57% (80% with the filter). By k = 1000, τ is so low that
-every partition has a slot above it and nothing is pruned
-(`bench/results-m2.txt`, k sweep).
+95-97%. k = 100 still skips 57% (80% with the filter). By k = 1000, τ is so
+low that every partition has a slot above it and nothing is pruned.
 
-**More partitions prune better.** With 4096 partitions only 12-13 are merged
-and the merge phase is 84-146x faster. Even plain partition totals work at
+**More partitions prune better.** With 4096 partitions only 13 are merged and
+the merge phase is 84-88x faster. Even plain partition totals work at
 that size, because each partition's tail is 16 times smaller than at 256. Slots
 get similar tightness without multiplying partitions, buffers and per-partition
 overhead. That fits the post's point that a top-10 can touch at most 10
 partitions with real winners.
 
 **Overhead when nothing can be pruned.** Uniform keys, one thread, best of 15
-(`bench/overhead-m2.txt`): +7% (sketch only) and +11% (with filter) vs the
-full merge. A second run of the same command gave +6% and -5%. The cost is one
-add per partial in phase 1 plus a sort of 256 bounds, and it sits below what
-this machine can resolve. See the caveat below.
+(`bench/results-gha.txt`): +3.3% for partition totals and +5.8% for 16 slots,
+compared with the full merge. The cost is one counter update per partial
+during the phase-1 flush, plus sorting 256 bounds. With the filter, +5.6%: it
+switches itself off where no slot is below τ. At 4 threads the uniform rows of
+the skew table show 7-10%.
 
-### A caveat about these timings
+**Run-to-run variation in the partition counts.** Workers take partitions
+concurrently, so one can start merging a partition before another has raised
+τ far enough to rule it out. The answer never changes, but the merged count
+does: 11-13 of 256 for 16 slots in these runs, and 27 vs 47 once for 4 slots.
 
-The M2 these numbers come from had 8 GB of RAM, other applications holding
-most of it, ~8 GB of swap in use, and a load average around 6 from unrelated
-processes. Look at the `local` column: phase 1 does *identical* work under
-every strategy, yet its median varies by ±20% between rows. Treat any
-end-to-end difference under ~20% in these tables as noise. The partition and
-partial counts are exact, and the merge-phase speedups (10-30x) are far
-outside the noise. `.github/workflows/bench.yml` reruns the whole thing on a
-GitHub-hosted runner for an independent measurement.
+### A caveat about the M2 timings
+
+The M2 had 8 GB of RAM, other applications holding most of it, ~8 GB of swap in
+use, and a load average around 6 from unrelated processes. In
+`bench/results-m2.txt`, phase 1 does *identical* work under every strategy,
+yet its median varies by ±20% between rows. The partition and partial counts
+agree with the runner; the M2's end-to-end ratios are only trustworthy where
+they exceed that noise. That is why the runner numbers lead this README.
 
 ## What is implemented
 
@@ -288,7 +302,10 @@ macOS.
   a larger share of the query.
 - When the k-th value is not well separated from the bulk (uniform keys, or k
   in the thousands), nothing is pruned and you pay a small overhead.
-- Benchmarks were run on one noisy laptop. See the caveat above.
+- Benchmarks come from one shared CI runner and one loaded laptop. There is no
+  comparison against DuckDB or ClickHouse on the same queries. The baseline is
+  this engine with pruning turned off, which isolates the technique but
+  doesn't say how the engine compares in absolute speed.
 
 ## References
 

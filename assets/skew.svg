@@ -1,20 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1000" height="420" viewBox="0 0 1000 420" font-family='system-ui, -apple-system, "Segoe UI", sans-serif'>
 <rect width="100%" height="100%" rx="8" fill="#fcfcfb"/>
 <text x="24.0" y="32.0" font-size="16" fill="#0b0b0b" text-anchor="start" font-weight="600" >Speedup over a full merge, by key skew (synthetic, COUNT(*), k = 10)</text>
-<text x="24.0" y="54.0" font-size="12.5" fill="#52514e" text-anchor="start" font-weight="400" >20M rows over 4M keys, Zipf exponent s (0 = uniform), 4 threads, median of 5. Gray line: 1.0 = full merge.</text>
+<text x="24.0" y="54.0" font-size="12.5" fill="#52514e" text-anchor="start" font-weight="400" >20M rows over 4M keys, Zipf exponent s (0 = uniform), 4 threads, GitHub Actions runner (Linux), median of 5. Gray line: 1.0 = full merge.</text>
 <text x="70.0" y="86.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >merge phase speedup (x)</text>
 <line x1="70.0" y1="330.0" x2="400.0" y2="330.0" stroke="#e1e0d9" stroke-width="1"/>
 <text x="62.0" y="334.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" >0</text>
 <line x1="70.0" y1="284.0" x2="400.0" y2="284.0" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62.0" y="288.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" >6</text>
+<text x="62.0" y="288.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" >5</text>
 <line x1="70.0" y1="238.0" x2="400.0" y2="238.0" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62.0" y="242.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" >12</text>
+<text x="62.0" y="242.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" >10</text>
 <line x1="70.0" y1="192.0" x2="400.0" y2="192.0" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62.0" y="196.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" >18</text>
+<text x="62.0" y="196.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" >15</text>
 <line x1="70.0" y1="146.0" x2="400.0" y2="146.0" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62.0" y="150.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" >24</text>
+<text x="62.0" y="150.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" >20</text>
 <line x1="70.0" y1="100.0" x2="400.0" y2="100.0" stroke="#e1e0d9" stroke-width="1"/>
-<text x="62.0" y="104.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" >30</text>
+<text x="62.0" y="104.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" >25</text>
 <line x1="70.0" y1="330.0" x2="400.0" y2="330.0" stroke="#c3c2b7" stroke-width="1"/>
 <text x="70.0" y="346.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >0</text>
 <text x="180.0" y="346.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >0.5</text>
@@ -23,31 +23,31 @@
 <text x="334.0" y="346.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >1.2</text>
 <text x="400.0" y="346.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >1.5</text>
 <text x="235.0" y="364.0" font-size="11.5" fill="#52514e" text-anchor="middle" font-weight="400" >Zipf exponent s</text>
-<polyline points="70.0,323.1 180.0,322.1 246.0,321.4 290.0,223.6 334.0,163.7 400.0,278.4" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round"/>
-<circle cx="70.0" cy="323.1" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 0: 0.89</title></circle>
-<circle cx="180.0" cy="322.1" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 0.5: 1.02</title></circle>
-<circle cx="246.0" cy="321.4" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 0.8: 1.12</title></circle>
-<circle cx="290.0" cy="223.6" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 1: 13.88</title></circle>
-<circle cx="334.0" cy="163.7" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 1.2: 21.69</title></circle>
-<circle cx="400.0" cy="278.4" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 1.5: 6.73</title></circle>
-<polyline points="70.0,323.8 180.0,322.4 246.0,198.2 290.0,185.6 334.0,211.2 400.0,270.5" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
-<circle cx="70.0" cy="323.8" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 0: 0.80</title></circle>
-<circle cx="180.0" cy="322.4" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 0.5: 1.00</title></circle>
-<circle cx="246.0" cy="198.2" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 0.8: 17.19</title></circle>
-<circle cx="290.0" cy="185.6" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 1: 18.84</title></circle>
-<circle cx="334.0" cy="211.2" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 1.2: 15.50</title></circle>
-<circle cx="400.0" cy="270.5" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 1.5: 7.76</title></circle>
-<polyline points="70.0,321.3 180.0,322.3 246.0,217.7 290.0,137.2 334.0,120.2 400.0,265.5" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
-<circle cx="70.0" cy="321.3" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 0: 1.13</title></circle>
-<circle cx="180.0" cy="322.3" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 0.5: 1.01</title></circle>
-<circle cx="246.0" cy="217.7" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 0.8: 14.64</title></circle>
-<circle cx="290.0" cy="137.2" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 1: 25.14</title></circle>
-<circle cx="334.0" cy="120.2" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 1.2: 27.36</title></circle>
-<circle cx="400.0" cy="265.5" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 1.5: 8.41</title></circle>
-<line x1="70.0" y1="322.3" x2="400.0" y2="322.3" stroke="#c3c2b7" stroke-width="1.5"/>
-<text x="408.0" y="112.2" font-size="11.5" fill="#0b0b0b" text-anchor="start" font-weight="500" >slots (16) + filter: up to 27x</text>
-<text x="408.0" y="155.7" font-size="11.5" fill="#0b0b0b" text-anchor="start" font-weight="500" >partition totals: up to 22x</text>
-<text x="408.0" y="177.6" font-size="11.5" fill="#0b0b0b" text-anchor="start" font-weight="500" >slots (16): up to 19x</text>
+<polyline points="70.0,321.3 180.0,321.0 246.0,320.9 290.0,251.6 334.0,183.5 400.0,270.8" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="70.0" cy="321.3" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 0: 0.95</title></circle>
+<circle cx="180.0" cy="321.0" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 0.5: 0.98</title></circle>
+<circle cx="246.0" cy="320.9" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 0.8: 0.99</title></circle>
+<circle cx="290.0" cy="251.6" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 1: 8.52</title></circle>
+<circle cx="334.0" cy="183.5" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 1.2: 15.92</title></circle>
+<circle cx="400.0" cy="270.8" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 1.5: 6.44</title></circle>
+<polyline points="70.0,321.0 180.0,321.0 246.0,253.9 290.0,236.4 334.0,182.2 400.0,265.4" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="70.0" cy="321.0" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 0: 0.97</title></circle>
+<circle cx="180.0" cy="321.0" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 0.5: 0.98</title></circle>
+<circle cx="246.0" cy="253.9" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 0.8: 8.27</title></circle>
+<circle cx="290.0" cy="236.4" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 1: 10.18</title></circle>
+<circle cx="334.0" cy="182.2" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 1.2: 16.06</title></circle>
+<circle cx="400.0" cy="265.4" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 1.5: 7.02</title></circle>
+<polyline points="70.0,320.9 180.0,320.9 246.0,255.3 290.0,144.7 334.0,167.3 400.0,269.0" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="70.0" cy="320.9" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 0: 0.98</title></circle>
+<circle cx="180.0" cy="320.9" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 0.5: 0.99</title></circle>
+<circle cx="246.0" cy="255.3" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 0.8: 8.12</title></circle>
+<circle cx="290.0" cy="144.7" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 1: 20.14</title></circle>
+<circle cx="334.0" cy="167.3" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 1.2: 17.69</title></circle>
+<circle cx="400.0" cy="269.0" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 1.5: 6.63</title></circle>
+<line x1="70.0" y1="320.8" x2="400.0" y2="320.8" stroke="#c3c2b7" stroke-width="1.5"/>
+<text x="408.0" y="136.7" font-size="11.5" fill="#0b0b0b" text-anchor="start" font-weight="500" >slots (16) + filter: up to 20x</text>
+<text x="408.0" y="174.2" font-size="11.5" fill="#0b0b0b" text-anchor="start" font-weight="500" >slots (16): up to 16x</text>
+<text x="408.0" y="188.2" font-size="11.5" fill="#0b0b0b" text-anchor="start" font-weight="500" >partition totals: up to 16x</text>
 <text x="630.0" y="86.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >end to end speedup (x)</text>
 <line x1="630.0" y1="330.0" x2="960.0" y2="330.0" stroke="#e1e0d9" stroke-width="1"/>
 <text x="622.0" y="334.0" font-size="11" fill="#898781" text-anchor="end" font-weight="400" >0</text>
@@ -69,27 +69,27 @@
 <text x="894.0" y="346.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >1.2</text>
 <text x="960.0" y="346.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >1.5</text>
 <text x="795.0" y="364.0" font-size="11.5" fill="#52514e" text-anchor="middle" font-weight="400" >Zipf exponent s</text>
-<polyline points="630.0,213.7 740.0,182.2 806.0,150.3 850.0,170.7 894.0,191.6 960.0,172.3" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round"/>
-<circle cx="630.0" cy="213.7" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 0: 0.76</title></circle>
-<circle cx="740.0" cy="182.2" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 0.5: 0.96</title></circle>
-<circle cx="806.0" cy="150.3" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 0.8: 1.17</title></circle>
-<circle cx="850.0" cy="170.7" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 1: 1.04</title></circle>
-<circle cx="894.0" cy="191.6" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 1.2: 0.90</title></circle>
-<circle cx="960.0" cy="172.3" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 1.5: 1.03</title></circle>
-<polyline points="630.0,227.7 740.0,165.1 806.0,136.4 850.0,172.6 894.0,174.2 960.0,177.9" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
-<circle cx="630.0" cy="227.7" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 0: 0.67</title></circle>
-<circle cx="740.0" cy="165.1" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 0.5: 1.08</title></circle>
-<circle cx="806.0" cy="136.4" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 0.8: 1.26</title></circle>
-<circle cx="850.0" cy="172.6" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 1: 1.03</title></circle>
-<circle cx="894.0" cy="174.2" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 1.2: 1.02</title></circle>
-<circle cx="960.0" cy="177.9" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 1.5: 0.99</title></circle>
-<polyline points="630.0,183.1 740.0,183.1 806.0,126.4 850.0,166.8 894.0,152.0 960.0,177.6" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
-<circle cx="630.0" cy="183.1" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 0: 0.96</title></circle>
-<circle cx="740.0" cy="183.1" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 0.5: 0.96</title></circle>
-<circle cx="806.0" cy="126.4" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 0.8: 1.33</title></circle>
-<circle cx="850.0" cy="166.8" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 1: 1.06</title></circle>
-<circle cx="894.0" cy="152.0" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 1.2: 1.16</title></circle>
-<circle cx="960.0" cy="177.6" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 1.5: 0.99</title></circle>
+<polyline points="630.0,191.7 740.0,184.2 806.0,185.4 850.0,134.5 894.0,148.2 960.0,169.6" fill="none" stroke="#1baf7a" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="630.0" cy="191.7" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 0: 0.90</title></circle>
+<circle cx="740.0" cy="184.2" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 0.5: 0.95</title></circle>
+<circle cx="806.0" cy="185.4" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 0.8: 0.94</title></circle>
+<circle cx="850.0" cy="134.5" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 1: 1.28</title></circle>
+<circle cx="894.0" cy="148.2" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 1.2: 1.19</title></circle>
+<circle cx="960.0" cy="169.6" r="4" fill="#1baf7a" stroke="#fcfcfb" stroke-width="2"><title>partition totals at 1.5: 1.05</title></circle>
+<polyline points="630.0,187.5 740.0,184.9 806.0,123.5 850.0,139.2 894.0,152.0 960.0,170.1" fill="none" stroke="#eb6834" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="630.0" cy="187.5" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 0: 0.93</title></circle>
+<circle cx="740.0" cy="184.9" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 0.5: 0.95</title></circle>
+<circle cx="806.0" cy="123.5" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 0.8: 1.35</title></circle>
+<circle cx="850.0" cy="139.2" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 1: 1.24</title></circle>
+<circle cx="894.0" cy="152.0" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 1.2: 1.16</title></circle>
+<circle cx="960.0" cy="170.1" r="4" fill="#eb6834" stroke="#fcfcfb" stroke-width="2"><title>slots (16) at 1.5: 1.04</title></circle>
+<polyline points="630.0,188.5 740.0,185.0 806.0,126.8 850.0,135.2 894.0,163.5 960.0,172.5" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round"/>
+<circle cx="630.0" cy="188.5" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 0: 0.92</title></circle>
+<circle cx="740.0" cy="185.0" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 0.5: 0.95</title></circle>
+<circle cx="806.0" cy="126.8" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 0.8: 1.33</title></circle>
+<circle cx="850.0" cy="135.2" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 1: 1.27</title></circle>
+<circle cx="894.0" cy="163.5" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 1.2: 1.09</title></circle>
+<circle cx="960.0" cy="172.5" r="4" fill="#2a78d6" stroke="#fcfcfb" stroke-width="2"><title>slots (16) + filter at 1.5: 1.03</title></circle>
 <line x1="630.0" y1="176.7" x2="960.0" y2="176.7" stroke="#c3c2b7" stroke-width="1.5"/>
 <rect x="70.0" y="390.0" width="12.0" height="12.0" rx="2" fill="#1baf7a"></rect>
 <text x="88.0" y="400.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >partition totals</text>

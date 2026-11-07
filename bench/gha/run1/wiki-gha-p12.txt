@@ -1,0 +1,22 @@
+loaded 34558052 rows from 6 file(s) in 3.1 s (gunzip + parse + hash; not part of the query times below)
+
+SELECT domain_code, page_title, SUM(count_views) FROM pageviews GROUP BY domain_code, page_title ORDER BY 2 DESC LIMIT 10
+
+   1.     639163  en.m Main_Page
+   2.     421216  en Main_Page
+   3.     158413  en.m Wikipedia:Featured_pictures
+   4.     150185  de Wikipedia:Hauptseite
+   5.     130321  en.m Tung_Tung_Tung_Sahur
+   6.     109430  commons.m.m File:LinkedIn_icon.svg
+   7.     105945  de.m Wikipedia:Hauptseite
+   8.      90311  en.m Special:Search
+   9.      86861  en Special:Search
+  10.      81265  ja.m メインページ
+
+  strategy                total ms     local    sketch     merge  speedup  merge x partitions   skipped
+  full merge                 504.5     263.2       0.0     192.8    1.00x    1.00x 4096/4096       0.0%
+  partition totals           349.3     299.9       0.1       1.9    1.44x   99.53x   16/4096      99.6%
+  slots (16)                 388.4     332.2       0.8       1.9    1.30x  102.14x   13/4096      99.7%
+  slots (16) + filter        387.0     333.6       0.5       1.8    1.30x  107.54x   13/4096      99.8%
+  18341211 distinct pages, 34558052 partial aggregates across 4096 partitions; answers identical across strategies
+wrote bench/wiki-gha-p12.json

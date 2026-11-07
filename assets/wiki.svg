@@ -4,40 +4,38 @@
 <text x="24.0" y="58.0" font-size="12.5" fill="#52514e" text-anchor="start" font-weight="400" >SUM(views) GROUP BY (wiki, page) ORDER BY 2 DESC LIMIT 10: 6 hourly dumps, 4 threads, GitHub Actions runner (Linux), median of 7 runs.</text>
 <line x1="170.0" y1="84.0" x2="170.0" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
 <text x="170.0" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >0 ms</text>
-<line x1="255.2" y1="84.0" x2="255.2" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
-<text x="255.2" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >100 ms</text>
-<line x1="340.3" y1="84.0" x2="340.3" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
-<text x="340.3" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >200 ms</text>
-<line x1="425.5" y1="84.0" x2="425.5" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
-<text x="425.5" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >300 ms</text>
-<line x1="510.7" y1="84.0" x2="510.7" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
-<text x="510.7" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >400 ms</text>
-<line x1="595.8" y1="84.0" x2="595.8" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
-<text x="595.8" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >500 ms</text>
+<line x1="262.3" y1="84.0" x2="262.3" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="262.3" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >100 ms</text>
+<line x1="354.6" y1="84.0" x2="354.6" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="354.6" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >200 ms</text>
+<line x1="447.0" y1="84.0" x2="447.0" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="447.0" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >300 ms</text>
+<line x1="539.3" y1="84.0" x2="539.3" y2="286.0" stroke="#e1e0d9" stroke-width="1"/>
+<text x="539.3" y="312.0" font-size="11" fill="#898781" text-anchor="middle" font-weight="400" >400 ms</text>
 <text x="158.0" y="114.0" font-size="13" fill="#0b0b0b" text-anchor="end" font-weight="500" >full merge</text>
-<rect x="170.0" y="92.0" width="224.1" height="34.0" rx="0" fill="#c3c2b7"><title>full merge: local phase 264 ms</title></rect>
-<rect x="396.1" y="92.0" width="22.4" height="34.0" rx="0" fill="#e1e0d9"><title>rest of the total: 27 ms (sketch combine, freeing buffers; each column is its own median)</title></rect>
-<path d="M420.5,92.0 h180.7 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-180.7 z" fill="#2a78d6"><title>full merge: merge phase 217 ms</title></path>
-<text x="615.2" y="106.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >0.51 s</text>
-<text x="615.2" y="122.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 256/256 partitions, merge 217 ms</text>
+<rect x="170.0" y="92.0" width="152.2" height="34.0" rx="0" fill="#c3c2b7"><title>full merge: local phase 166 ms</title></rect>
+<rect x="324.2" y="92.0" width="23.0" height="34.0" rx="0" fill="#e1e0d9"><title>rest of the total: 26 ms (sketch combine, freeing buffers; each column is its own median)</title></rect>
+<path d="M349.2,92.0 h262.6 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-262.6 z" fill="#2a78d6"><title>full merge: merge phase 289 ms</title></path>
+<text x="625.8" y="106.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >0.48 s</text>
+<text x="625.8" y="122.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 256/256 partitions, merge 289 ms</text>
 <text x="158.0" y="166.0" font-size="13" fill="#0b0b0b" text-anchor="end" font-weight="500" >partition totals</text>
-<rect x="170.0" y="144.0" width="252.9" height="34.0" rx="0" fill="#c3c2b7"><title>partition totals: local phase 298 ms</title></rect>
-<rect x="424.9" y="144.0" width="22.5" height="34.0" rx="0" fill="#e1e0d9"><title>rest of the total: 28 ms (sketch combine, freeing buffers; each column is its own median)</title></rect>
-<path d="M449.4,144.0 h178.6 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-178.6 z" fill="#2a78d6"><title>partition totals: merge phase 214 ms</title></path>
-<text x="642.0" y="158.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >0.54 s  (0.94x)</text>
-<text x="642.0" y="174.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 256/256 partitions, merge 214 ms</text>
+<rect x="170.0" y="144.0" width="174.2" height="34.0" rx="0" fill="#c3c2b7"><title>partition totals: local phase 190 ms</title></rect>
+<rect x="346.2" y="144.0" width="18.7" height="34.0" rx="0" fill="#e1e0d9"><title>rest of the total: 21 ms (sketch combine, freeing buffers; each column is its own median)</title></rect>
+<path d="M366.9,144.0 h261.1 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-261.1 z" fill="#2a78d6"><title>partition totals: merge phase 287 ms</title></path>
+<text x="642.0" y="158.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >0.50 s  (0.96x)</text>
+<text x="642.0" y="174.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 256/256 partitions, merge 287 ms</text>
 <text x="158.0" y="218.0" font-size="13" fill="#0b0b0b" text-anchor="end" font-weight="500" >slots (16)</text>
-<rect x="170.0" y="196.0" width="248.4" height="34.0" rx="0" fill="#c3c2b7"><title>slots (16): local phase 293 ms</title></rect>
-<rect x="420.4" y="196.0" width="26.3" height="34.0" rx="0" fill="#e1e0d9"><title>rest of the total: 32 ms (sketch combine, freeing buffers; each column is its own median)</title></rect>
-<path d="M448.7,196.0 h18.8 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-18.8 z" fill="#2a78d6"><title>slots (16): merge phase 27 ms</title></path>
-<text x="481.5" y="210.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >0.35 s  (1.45x)</text>
-<text x="481.5" y="226.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 14/256 partitions, merge 27 ms</text>
+<rect x="170.0" y="196.0" width="177.1" height="34.0" rx="0" fill="#c3c2b7"><title>slots (16): local phase 193 ms</title></rect>
+<rect x="349.1" y="196.0" width="27.1" height="34.0" rx="0" fill="#e1e0d9"><title>rest of the total: 30 ms (sketch combine, freeing buffers; each column is its own median)</title></rect>
+<path d="M378.2,196.0 h26.7 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-26.7 z" fill="#2a78d6"><title>slots (16): merge phase 33 ms</title></path>
+<text x="418.9" y="210.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >0.26 s  (1.87x)</text>
+<text x="418.9" y="226.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 14/256 partitions, merge 33 ms</text>
 <text x="158.0" y="270.0" font-size="13" fill="#0b0b0b" text-anchor="end" font-weight="500" >slots (16) + filter</text>
-<rect x="170.0" y="248.0" width="247.8" height="34.0" rx="0" fill="#c3c2b7"><title>slots (16) + filter: local phase 292 ms</title></rect>
-<rect x="419.8" y="248.0" width="30.0" height="34.0" rx="0" fill="#e1e0d9"><title>rest of the total: 36 ms (sketch combine, freeing buffers; each column is its own median)</title></rect>
-<path d="M451.8,248.0 h17.2 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-17.2 z" fill="#2a78d6"><title>slots (16) + filter: merge phase 25 ms</title></path>
-<text x="483.0" y="262.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >0.35 s  (1.44x)</text>
-<text x="483.0" y="278.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 14/256 partitions, merge 25 ms</text>
+<rect x="170.0" y="248.0" width="177.0" height="34.0" rx="0" fill="#c3c2b7"><title>slots (16) + filter: local phase 193 ms</title></rect>
+<rect x="349.0" y="248.0" width="26.1" height="34.0" rx="0" fill="#e1e0d9"><title>rest of the total: 29 ms (sketch combine, freeing buffers; each column is its own median)</title></rect>
+<path d="M377.0,248.0 h24.0 a4,4 0 0 1 4,4 v26.0 a4,4 0 0 1 -4,4 h-24.0 z" fill="#2a78d6"><title>slots (16) + filter: merge phase 30 ms</title></path>
+<text x="415.1" y="262.0" font-size="13" fill="#0b0b0b" text-anchor="start" font-weight="600" >0.25 s  (1.90x)</text>
+<text x="415.1" y="278.0" font-size="11.5" fill="#52514e" text-anchor="start" font-weight="400" >merged 14/256 partitions, merge 30 ms</text>
 <rect x="24.0" y="328.0" width="12.0" height="12.0" rx="2" fill="#c3c2b7"></rect>
 <text x="42.0" y="338.0" font-size="12" fill="#52514e" text-anchor="start" font-weight="400" >local phase (pre-aggregate + flush)</text>
 <rect x="295.0" y="328.0" width="12.0" height="12.0" rx="2" fill="#2a78d6"></rect>

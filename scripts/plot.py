@@ -2,7 +2,7 @@
 """Render the README charts as SVG from benchmark JSON. Standard library only.
 
     python3 scripts/plot.py                       # GitHub runner results (default)
-    python3 scripts/plot.py bench/wiki-m2.json bench/results-m2.json
+    python3 scripts/plot.py bench/m2/wiki-m2.json bench/m2/results-m2.json
 
 Writes assets/wiki.svg, assets/partition-map.svg, assets/skew.svg and
 assets/slots.svg. Hover any mark for its exact value (SVG <title>).
@@ -286,7 +286,7 @@ def slots_chart(res):
 
 def main():
     ASSETS.mkdir(exist_ok=True)
-    args = sys.argv[1:] or ["bench/wiki-gha.json", "bench/results-gha.json"]
+    args = sys.argv[1:] or ["bench/gha/run1/wiki-gha.json", "bench/gha/run1/results-gha.json"]
     for a in args:
         d = json.loads((ROOT / a).read_text() if not Path(a).is_absolute() else Path(a).read_text())
         if "detail" in d:
